@@ -15,13 +15,15 @@ command: johona
 finish-args:
   # GUI + rendering
   - --share=ipc
-  - --socket=fdo
+  - --socket=session-bus
   - --socket=wayland
   - --socket=x11
   - --device=dri
-  # Session D-Bus: Plasma backend + XDG portal
+  # Session D-Bus names used (documented; session-bus grants full access):
+  #   org.kde.plasmashell            Plasma backend
+  #   org.freedesktop.portal.desktop XDG Background portal (interface: ...portal.Background)
   - --talk-name=org.kde.plasmashell
-  - --talk-name=org.freedesktop.portal.Background
+  - --talk-name=org.freedesktop.portal.desktop
   # System D-Bus: suspend/resume hook, TZ watch, Geoclue2 location detect
   - --system-talk-name=org.freedesktop.login1
   - --system-talk-name=org.freedesktop.timedate1
@@ -45,6 +47,7 @@ modules:
         path: ..
         exclude:
           - build
+          - build-asan
           - flatpak
           - .git
     cleanup:

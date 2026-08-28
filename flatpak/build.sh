@@ -17,14 +17,21 @@ MANIFEST="top.spelunk.johona.yaml"
 BUILD_DIR="build"
 BUNDLE="${APP_ID}.flatpak"
 
+runtime_installed() {
+    # $1 = ref, e.g. org.kde.Platform  (check --user and --system installations)
+    flatpak list --app --runtime --user 2>/dev/null | awk '{print $2}' | grep -qx "$1" && return 0
+    flatpak list --app --runtime --system 2>/dev/null | awk '{print $2}' | grep -qx "$1" && return 0
+    return 1
+}
+
 ensure_runtimes() {
     local remote="${1:-flathub}"
     for rt in "org.kde.Platform//6.9" "org.kde.Sdk//6.9"; do
-        if ! flatpak list --app --runtime 2>/dev/null | grep -q "^${rt%%//*}"; then
+        if ! runtime_installed "${rt%%//*}"; then
             echo "Installing $rt from $remote…"
-            flatpak remote-add-if-not-exists --if-not-exists "$remote" \
+            flatpak remote-add-if-not-exists --user "$remote" \
                 https://dl.flathub.org/repo/flathub.flatpakrepo 2>/dev/null || true
-            flatpak install -y --noninteractive --runtime "$remote" "$rt"
+            flatpak install -y --noninteractive --user --runtime "$remote" "$rt"
         fi
     done
 }
