@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Johona Wallpaper
+Comment=Solar-segment wallpaper scheduler
+Exec=flatpak run top.spelunk.johona
+Terminal=false
+X-GNOME-Autostart-enabled=true

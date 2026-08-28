@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+  <id>top.spelunk.johona</id>
+  <name>Johona Wallpaper</name>
+  <summary>Change your desktop wallpaper with the time of day</summary>
+  <description>
+    <p>
+      Johona Wallpaper switches your desktop wallpaper between sunrise, day,
+      sunset and night themes, timed to the real solar calendar for your
+      location — the same sun-segment model used by WinDynamicDesktop.
+    </p>
+    <p>
+      Themes are WDD-compatible packs (.ddw/.zip) with per-segment image
+      lists. An optional daily shuffle rotates between your installed
+      themes. Works on KDE Plasma, GNOME, and any desktop with the XDG
+      background portal or xdg-settings.
+    </p>
+  </description>
+  <launchable type="desktop-id">top.spelunk.johona.desktop</launchable>
+  <provides>
+    <binary>johona</binary>
+  </provides>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MPL-2.0</project_license>
+  <developer_name>Spelunk Development</developer_name>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="1.0.0" type="stable">
+      <description>
+        <p>Initial Flatpak release (C++/Qt 6 rewrite of kWallpaper 1.1.0).</p>
+      </description>
+    </release>
+  </releases>
+  <credits>
+    <credit type="author">
+      <name>Spelunk Development</name>
+      <role>Developer</role>
+    </credit>
+    <credit type="authority">
+      <name>t1m0thyj (WinDynamicDesktop)</name>
+      <role>Inspiration — sun-segment wallpaper model</role>
+    </credit>
+    <credit type="code">
+      <name>Vladimir Agafonkin (mourner)</name>
+      <role>Solar position math (suncalc v1.9.0, BSD-2-Clause)</role>
+    </credit>
+  </credits>
+</component>

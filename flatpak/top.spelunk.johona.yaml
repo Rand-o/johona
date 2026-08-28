@@ -1,0 +1,59 @@
+# Johona Wallpaper — flatpak-builder manifest (spec §12).
+#
+# Build (from the repo root):
+#   flatpak/build.sh
+#
+# Runtime: org.kde.Platform (Qt 6 built in — pragmatic choice for a Qt 6
+# app with a Plasma backend).  libzip is not in the runtime, so the
+# vendored source is built statically (identical to the dev build).
+
+app-id: top.spelunk.johona
+runtime: org.kde.Platform
+runtime-version: "6.9"
+sdk: org.kde.Sdk//6.9
+command: johona
+finish-args:
+  # GUI + rendering
+  - --share=ipc
+  - --socket=fdo
+  - --socket=wayland
+  - --socket=x11
+  - --device=dri
+  # Session D-Bus: Plasma backend + XDG portal
+  - --talk-name=org.kde.plasmashell
+  - --talk-name=org.freedesktop.portal.Background
+  # System D-Bus: suspend/resume hook, TZ watch, Geoclue2 location detect
+  - --system-talk-name=org.freedesktop.login1
+  - --system-talk-name=org.freedesktop.timedate1
+  - --system-talk-name=org.freedesktop.GeoClue2
+  # One-time migration from kWallpaper (read-only)
+  - --filesystem=~/.var/app/top.spelunk.kwallpaper:ro
+  # Write the HOST autostart entry (inside the sandbox ~/.config is private)
+  - --filesystem=xdg-config/autostart
+  # Geoclue2 network location (only used by the explicit Auto-detect action)
+  - --share=network
+
+modules:
+  - name: johona
+    buildsystem: cmake
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DJOHONA_BUILD_TESTS=OFF
+      - -DCMAKE_INSTALL_PREFIX=/app
+    sources:
+      - type: dir
+        path: ..
+        exclude:
+          - build
+          - flatpak
+          - .git
+    cleanup:
+      - /include
+      - /lib
+      - /lib/pkgconfig
+      - /share/cmake
+      - /share/doc
+      - /bin/cmake
+      - /bin/ninja
+      - /bin/cpack
+      - /bin/ctest

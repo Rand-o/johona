@@ -1,0 +1,14 @@
+# build trees (dev builds run inside the KDE Flatpak SDK)
+build/
+build-*/
+
+# Qt Creator / editor cruft
+*.user
+*.kate-swp
+.kdev4/
+.idea/
+.vscode/
+
+# core dumps / logs
+core
+*.log

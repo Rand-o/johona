@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Johona Wallpaper
+Comment=Change your desktop wallpaper with the time of day
+Exec=johona
+Icon=top.spelunk.johona
+Type=Application
+Categories=Graphics;
+Keywords=wallpaper;plasma;gnome;changer;
+Terminal=false

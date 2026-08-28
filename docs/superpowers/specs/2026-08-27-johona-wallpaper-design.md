@@ -101,6 +101,9 @@ through pluggable backends.
   KDE-specific `kreadconfig5`.
 - **New feature:** auto-update location when the system timezone changes
   (opt-in toggle, **default OFF**).
+- **New feature:** tray menu **Next wallpaper** — when daily shuffle is
+  enabled, advance to the next theme in the shuffle list and apply it
+  (`advanceShuffle()`, §9.5; tray item in §11).
 
 ## 4. Architecture
 
@@ -135,6 +138,10 @@ johona/
 ├── resources/tz_coordinates.json # timezone → representative coordinates table
 └── README.md
 ```
+
+**Icons.** Reuse the existing kWallpaper icon set (app icon + light/dark
+tray icons) from the kwallpaper repo's `icons/` directory — no new icon
+artwork for this project.
 
 **Data flow.** User action (Apply) → `engine.applyTheme()` → `solar` picks
 the image for the current moment → a `backend` sets the wallpaper → config +
@@ -187,7 +194,8 @@ the correctness anchor for everything above it.
 
 - **One-shot `QTimer`** armed at the exact next image boundary → fires →
   `engine.cycle()` → apply image → recompute → re-arm. On start (and after
-  any theme change), the scheduler first runs one immediate cycle so the
+  any theme change — including a manual Apply or the tray's **Next
+  wallpaper**), the scheduler first runs one immediate cycle so the
   wallpaper is synced to the current moment, then arms the one-shot.
 - **Safety `QTimer`** — interval = `scheduling.safety_interval` (default
   60 s). Each tick acts **only if needed**:
@@ -394,8 +402,17 @@ Any other old field not in the mapping (e.g. the vestigial
 ### 9.5 Engine (`engine/`)
 
 High-level operations shared by the GUI and the scheduler:
-`applyTheme(name?)`, `cycle()`, `nextChangeTime()`, `importTheme()`,
-`deleteTheme()`, `setWallpaper()`.
+`applyTheme(name?)`, `cycle()`, `nextChangeTime()`, `advanceShuffle()`,
+`importTheme()`, `deleteTheme()`, `setWallpaper()`.
+
+- `advanceShuffle()` (backing the tray **Next wallpaper** item): advance
+  the shuffle list by one — `current_index = (current_index + 1) mod
+  len(shuffle_list)`, `last_used_date` = today — and apply that theme's
+  image for the current moment. Same invariants as a daily advance: the
+  engine is the single writer, state persists only after the wallpaper set
+  succeeds (a failed set leaves the index unchanged and retries), and the
+  op is serialized with the scheduler. Works whether or not the scheduler
+  is running.
 
 - Owns config read-modify-write + shuffle state atomically.
 - Serializes state-mutating operations (internal mutex) so a GUI Apply and
@@ -433,9 +450,11 @@ High-level operations shared by the GUI and the scheduler:
   on KDE, GTK theme on GNOME — zero custom palette code); `light`/`dark`
   force Fusion + the matching Qt palette.
 - **System tray:** `QSystemTrayIcon` with bundled light/dark icons chosen
-  by effective mode; menu: Start/Stop scheduler, Show/Hide, Quit;
-  double-click shows the window; degrades gracefully to window-only when
-  no tray is available (e.g. stock GNOME).
+  by effective mode; menu: Start/Stop scheduler, **Next wallpaper**
+  (visible only when `scheduling.daily_shuffle_enabled` is on; disabled
+  when the shuffle list is empty; runs `advanceShuffle()` in a worker —
+  §9.5), Show/Hide, Quit; double-click shows the window; degrades
+  gracefully to window-only when no tray is available (e.g. stock GNOME).
 
 ### 11.1 Themes tab
 
@@ -532,9 +551,9 @@ High-level operations shared by the GUI and the scheduler:
 | `test_config` | round-trips, validation, defaults, atomic-write integrity |
 | `test_themes` | valid/invalid archives, missing-image rejection, duplicate names, delete-path safety, image ordering |
 | `test_shuffle` | day rollover, exhaustion reshuffle, persist-after-success (failed set leaves state untouched) |
-| `test_engine` | apply/cycle with a mock backend (success + failure paths) |
+| `test_engine` | apply/cycle with a mock backend (success + failure paths); `advanceShuffle()` (index wrap, persist-after-success) |
 | `test_backends` | probes and call shapes against mocked D-Bus connections / process runners |
-| `test_scheduler` | one-shot arm/re-arm, safety-tick no-op-unless-overdue, date change, clock jump, resume hook, bounded retry |
+| `test_scheduler` | one-shot arm/re-arm, safety-tick no-op-unless-overdue, date change, clock jump, resume hook, bounded retry, re-arm after manual theme change |
 | `test_location` | TZ-change detection, Geoclue2 (mocked), tz→coords fallback |
 | `test_migration` | schema mapping, copy, idempotency |
 
