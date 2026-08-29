@@ -4,6 +4,8 @@
 
 #include <QtTest>
 
+#include <QDBusInterface>
+#include <QDBusMessage>
 #include <QSignalSpy>
 #include <QTimeZone>
 
@@ -83,6 +85,7 @@ private slots:
     void backendFailure_defersToSafetyTick();
     void safetyTick_noop();
     void cycleDisabled_skipsSafetyTick();
+    void gnomeProbe_rejectedWithoutShell();
     void nextChange_valid();
     void startStop();
 
@@ -340,6 +343,40 @@ void TestEngine::cycleDisabled_skipsSafetyTick() {
     QCOMPARE(mock.setCalls(), 2);
 
     engine->stop();
+}
+
+void TestEngine::gnomeProbe_rejectedWithoutShell() {
+    // Regression (headless Plasma): with a connected session bus but no
+    // GNOME shell, the gsettings backend must NOT be available — gsettings
+    // "succeeds" there but nothing applies the value, so the engine would
+    // claim success while the wallpaper never changes.
+    //
+    // Requires a real message bus: a QDBusServer peer connection
+    // auto-replies to every call and cannot stand in for name resolution.
+    // Skipped when no session bus is reachable, or when GNOME shell is
+    // actually present (i.e. on a GNOME host).
+    const QDBusConnection conn = QDBusConnection::sessionBus();
+    QDBusInterface busIface(QStringLiteral("org.freedesktop.DBus"),
+                            QStringLiteral("/"),
+                            QStringLiteral("org.freedesktop.DBus.Peer"), conn);
+    if (busIface.call(QStringLiteral("Ping")).type() != QDBusMessage::ReplyMessage)
+        QSKIP("no reachable session bus");
+    QDBusInterface shell(QStringLiteral("org.gnome.Shell"),
+                         QStringLiteral("/org/gnome/Shell"),
+                         QStringLiteral("org.freedesktop.DBus.Peer"), conn);
+    if (shell.call(QStringLiteral("Ping")).type() == QDBusMessage::ReplyMessage)
+        QSKIP("GNOME shell present");
+
+    MockRun mock;  // gsettings "works" (rc 0) — must not be enough
+    backends::GnomeBackend backend(
+        [&mock](const QString& prog, const QStringList& args, QString* out,
+                QString* err, int timeout) {
+            return mock(prog, args, out, err, timeout);
+        },
+        backends::defaultBus);
+    QVERIFY(!backend.isAvailable());
+    // Rejected by the bus check, not by gsettings: no process was run.
+    QVERIFY(mock.calls.empty());
 }
 
 void TestEngine::nextChange_valid() {

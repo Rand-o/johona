@@ -20,10 +20,13 @@ finish-args:
   - --socket=x11
   - --device=dri
   # Session D-Bus names used (documented; session-bus grants full access):
-  #   org.kde.plasmashell            Plasma backend
-  #   org.freedesktop.portal.desktop XDG Background portal (interface: ...portal.Background)
+  #   org.kde.plasmashell             Plasma backend (/Core/Workspace or /PlasmaShell)
+  #   org.freedesktop.portal.Desktop  XDG Wallpaper portal (interface: ...portal.Wallpaper)
+  #   org.gnome.Shell                 presence check so the gsettings backend
+  #                                   is only used on actual GNOME desktops
   - --talk-name=org.kde.plasmashell
-  - --talk-name=org.freedesktop.portal.desktop
+  - --talk-name=org.freedesktop.portal.Desktop
+  - --talk-name=org.gnome.Shell
   # System D-Bus: suspend/resume hook, TZ watch, Geoclue2 location detect
   - --system-talk-name=org.freedesktop.login1
   - --system-talk-name=org.freedesktop.timedate1

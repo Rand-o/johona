@@ -9,6 +9,8 @@ build-*/
 .idea/
 .vscode/
 
-# core dumps / logs
+# core dumps / logs (the bare `core` pattern would also match the
+# src/core/ package, so it is explicitly re-included below)
 core
+!src/core/
 *.log
