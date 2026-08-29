@@ -83,23 +83,25 @@ int main(int argc, char** argv) {
     // ---- engine on a dedicated thread ------------------------------------
     // The engine's methods are synchronous/blocking (D-Bus, subprocesses,
     // file I/O); the GUI never calls them directly (spec §11.4).
+    //
+    // Heap-allocated: they must outlive the event loop and be deleted only
+    // after the engine thread has finished (their timers are owned by that
+    // thread; destroying them from the GUI thread while it runs corrupts
+    // timer ownership).
     QThread engineThread;
     engineThread.setObjectName(QStringLiteral("engine"));
 
     Engine::Deps deps;
     deps.config = config::load();
     const bool startScheduler = deps.config.startSchedulerOnLaunch;
-    Engine engine(std::move(deps));
-    engine.moveToThread(&engineThread);
+    auto* engine = new Engine(std::move(deps));
+    engine->moveToThread(&engineThread);
 
     location::LocationManager::Deps locDeps;
-    location::LocationManager locationManager(locDeps);
-    locationManager.moveToThread(&engineThread);
+    auto* locationManager = new location::LocationManager(locDeps);
+    locationManager->moveToThread(&engineThread);
 
-    QObject::connect(&engineThread, &QThread::finished, &engine, &QObject::deleteLater);
-    QObject::connect(&engineThread, &QThread::finished, &locationManager, &QObject::deleteLater);
-
-    gui::MainWindow window(&engine, &locationManager, report);
+    gui::MainWindow window(engine, locationManager, report);
     QObject::connect(&server, &QLocalServer::newConnection, &window, [&server, &window]() {
         QLocalSocket* client = server.nextPendingConnection();
         if (!client)
@@ -116,8 +118,21 @@ int main(int argc, char** argv) {
 
     // Hot-start the scheduler when configured (after the thread is up).
     if (startScheduler)
-        QMetaObject::invokeMethod(&engine, &Engine::start, Qt::QueuedConnection);
+        QMetaObject::invokeMethod(engine, &Engine::start, Qt::QueuedConnection);
 
     window.show();
-    return app.exec();
+    const int rc = app.exec();
+
+    // ---- orderly shutdown -------------------------------------------------
+    // Stop the engine on its own thread (queued, so it runs there), quit
+    // the thread's event loop, and only then destroy the thread-owned
+    // objects.  Bounded wait: the longest in-flight engine operation is the
+    // portal response wait (60 s) plus the 5 s apply retry.
+    QMetaObject::invokeMethod(engine, &Engine::stop, Qt::QueuedConnection);
+    engineThread.quit();
+    if (!engineThread.wait(90000))
+        qWarning() << "Engine thread did not exit in time";
+    delete engine;
+    delete locationManager;
+    return rc;
 }
