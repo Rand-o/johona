@@ -170,6 +170,22 @@ QImage decodeScheduleThumb(const QString& path) {
     return img;
 }
 
+// Legend geometry — shared by sizeHint() and paintEvent() so the widget is
+// always allocated exactly as wide as its content (a fixed width clips the
+// leftmost swatch when the font is wider than expected).
+constexpr int kLegendSw = 10;
+constexpr int kLegendGap = 5;
+constexpr int kLegendPad = 12;
+const char* kLegendNames[4] = {"night", "sunrise", "day", "sunset"};
+const char* kLegendLabels[4] = {"Night", "Sunrise", "Day", "Sunset"};
+
+int legendWidth(const QFontMetrics& fm) {
+    int total = 0;
+    for (int i = 0; i < 4; i++)
+        total += kLegendSw + kLegendGap + fm.horizontalAdvance(kLegendLabels[i]);
+    return total + kLegendPad * 3 + 2;  // +2 px left-edge safety
+}
+
 }  // namespace
 
 // ── Legend ───────────────────────────────────────────────────────────────
@@ -178,7 +194,12 @@ class ScheduleLegend : public QWidget {
 public:
     explicit ScheduleLegend(QWidget* parent = nullptr) : QWidget(parent) {
         setFixedHeight(kHeadH);
-        setFixedWidth(236);
+    }
+
+    QSize sizeHint() const override {
+        QFont f = font();
+        f.setPointSize(qMax(f.pointSize(), 8));
+        return QSize(legendWidth(QFontMetrics(f)), kHeadH);
     }
 
 protected:
@@ -191,29 +212,27 @@ protected:
         p.setFont(f);
         const QFontMetrics fm(f);
 
-        const char* names[4] = {"night", "sunrise", "day", "sunset"};
-        const char* labels[4] = {"Night", "Sunrise", "Day", "Sunset"};
-        const int sw = 10, gap = 5, pad = 12;
         int widths[4];
         int total = 0;
         for (int i = 0; i < 4; i++) {
-            widths[i] = sw + gap + fm.horizontalAdvance(labels[i]);
+            widths[i] =
+                kLegendSw + kLegendGap + fm.horizontalAdvance(kLegendLabels[i]);
             total += widths[i];
         }
-        total += pad * 3;
+        total += kLegendPad * 3;
         int x = width() - total;
-        const int y = (height() - sw) / 2;
+        const int y = (height() - kLegendSw) / 2;
         for (int i = 0; i < 4; i++) {
-            const SegColor c = segColor(names[i]);
+            const SegColor c = segColor(kLegendNames[i]);
             QPainterPath path;
-            path.addRoundedRect(QRectF(x, y, sw, sw), 2, 2);
+            path.addRoundedRect(QRectF(x, y, kLegendSw, kLegendSw), 2, 2);
             p.fillPath(path, c.fill);
             p.setPen(QPen(c.border, 1));
             p.drawPath(path);
-            x += sw + gap;
+            x += kLegendSw + kLegendGap;
             p.setPen(pal.color(QPalette::PlaceholderText));
-            p.drawText(x, y + sw - 2, labels[i]);
-            x += widths[i] - sw - gap + pad;
+            p.drawText(x, y + kLegendSw - 2, kLegendLabels[i]);
+            x += widths[i] - kLegendSw - kLegendGap + kLegendPad;
         }
     }
 };
