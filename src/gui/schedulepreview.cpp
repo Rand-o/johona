@@ -22,18 +22,19 @@ namespace johona::gui {
 
 namespace {
 
-// Geometry (px) — kWallpaper schedule_preview.py constants.
-constexpr int kHeadH = 22;
-constexpr int kRulerH = 16;
-constexpr int kRulerGap = 4;
-constexpr int kStripH = 40;
-constexpr int kBarH = kRulerH + kRulerGap + kStripH;  // 60
+// Geometry (px) — kWallpaper schedule_preview.py constants, compressed
+// vertically at the user's request (120 → 97 px total).
+constexpr int kHeadH = 18;
+constexpr int kRulerH = 14;
+constexpr int kRulerGap = 3;
+constexpr int kStripH = 32;
+constexpr int kBarH = kRulerH + kRulerGap + kStripH;  // 49
 constexpr int kMarginX = 8;
-constexpr int kMarginY = 6;
-constexpr int kSpacing = 3;
-constexpr int kWidgetH = kMarginY * 2 + kHeadH + kSpacing + kBarH + kSpacing + 20;  // 120
+constexpr int kMarginY = 4;
+constexpr int kSpacing = 2;
+constexpr int kWidgetH = kMarginY * 2 + kHeadH + kSpacing + kBarH + kSpacing + 18;  // 97
 
-constexpr int kThumbPx = 28;
+constexpr int kThumbPx = 24;
 constexpr int kThumbCachePx = kThumbPx * 4;  // 4× headroom for HiDPI
 constexpr int kTickMs = 60000;
 
