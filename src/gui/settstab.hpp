@@ -1,6 +1,7 @@
-// settstab.hpp — Settings tab (spec §11.2): scheduler, backend, location,
-// appearance, autostart.  Save → atomic config write + hot-reload of the
-// running scheduler.
+// settstab.hpp — Settings tab (kWallpaper SettingsPage parity + the
+// Johona backend-override group): scheduler, location, wallpaper backend,
+// appearance.  Save → atomic config write + hot-reload of the running
+// engine.  The color scheme and autostart apply immediately (kWallpaper).
 
 #pragma once
 
@@ -10,6 +11,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QScrollArea>
 #include <QSpinBox>
 #include <QWidget>
 
@@ -28,44 +30,43 @@ public:
     void reload();
 
 signals:
-    /// Emitted after a successful save (GUI hot-reloads the engine).
+    /// Emitted after a successful save (the main window rebuilds the
+    /// schedule preview, which depends on the location).
     void settingsSaved();
+    /// The color scheme changed (applied immediately, kWallpaper parity).
+    void schemeChanged(const QString& mode);  // "system"|"light"|"dark"
     void statusMessage(const QString& message);
 
 private slots:
     void onSave();
     void onAutoDetect();
-    void onBackendChanged(int index);
+    void onSchemeChanged(int index);
+    void onAutostartToggled(bool enabled);
 
 private:
     config::Config collect() const;
-    void setControlsEnabled(bool on);
 
     Engine* m_engine;
     location::LocationManager* m_location;
 
     // Scheduler
-    QSpinBox* m_safetyInterval;
+    QSpinBox* m_interval;
+    QCheckBox* m_runCycle;
     QCheckBox* m_dailyShuffle;
     QCheckBox* m_startOnLaunch;
 
-    // Backend
-    QComboBox* m_backend;
-    QLabel* m_backendHint;
-
     // Location
-    QLineEdit* m_city;
-    QDoubleSpinBox* m_latitude;
-    QDoubleSpinBox* m_longitude;
-    QComboBox* m_timezone;
-    QCheckBox* m_tzAutoUpdate;
-    QPushButton* m_detectBtn;
+    QLineEdit* m_timezone;
+    QDoubleSpinBox* m_lat;
+    QDoubleSpinBox* m_lon;
+    QPushButton* m_autoDetectBtn;
+
+    // Wallpaper backend (Johona)
+    QComboBox* m_backend;
 
     // Appearance
-    QComboBox* m_appearance;
-
-    // Autostart
     QCheckBox* m_autostart;
+    QComboBox* m_scheme;
 
     QPushButton* m_saveBtn;
 };

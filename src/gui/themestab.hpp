@@ -1,12 +1,18 @@
-// themestab.hpp — Themes tab (spec §11.1): theme list, import/apply/delete,
-// preview (cross-fade) and the 24 h schedule preview.
+// themestab.hpp — Themes tab (kWallpaper ThemesPage parity): theme list,
+// Import…/Apply/Delete, cross-fade preview slideshow, "N images" and the
+// 24 h schedule preview.
 
 #pragma once
 
+#include <QHash>
+#include <QLabel>
 #include <QListWidget>
 #include <QPushButton>
+#include <QSplitter>
+#include <QStringList>
 #include <QWidget>
 
+#include "config.hpp"
 #include "engine.hpp"
 
 namespace johona::gui {
@@ -17,43 +23,53 @@ class SchedulePreview;
 class ThemesTab : public QWidget {
     Q_OBJECT
 public:
-    ThemesTab(Engine* engine, QWidget* parent = nullptr);
+    ThemesTab(Engine* engine, const config::Paths& paths,
+              QWidget* parent = nullptr);
 
     /// Reload the theme list (after import/delete/migration).
     void refresh();
     /// Rebuild the preview + schedule for the selected theme (after a
     /// settings save changes the location).
     void rebuildPreview();
+    /// Scheduler running state: Delete is disabled (with the red warning)
+    /// while the scheduler runs (kWallpaper parity).
+    void setSchedulerRunning(bool running);
+    /// Start/stop the preview slideshow with tab visibility.
+    void setTabVisible(bool visible);
+
+    /// Menu "Import Theme…" target.
+    void onImport() { importTheme(); }
 
 signals:
-    /// A theme was applied (for the status bar / scheduler tab).
-    void themeApplied(const QString& themeName);
-    /// Request a status-bar message.
+    /// A status-bar message request.
     void statusMessage(const QString& message);
 
 private slots:
-    void onImport();
     void onApply();
     void onDelete();
-    void onNext();
     void onSelectionChanged();
-    void onApplied(const QString& themeName, const QString& imagePath,
-                   const QString& category);
 
 private:
+    void importTheme();
     QString selectedThemePath() const;
-    void setBusy(bool busy);
-    void updatePreview();
-    void rebuildSchedule();
+    void setBusy(QPushButton* btn, bool busy);
+    void refreshSchedule();
+    QStringList imagesFor(const QString& themePath) const;
 
     Engine* m_engine;
+    config::Paths m_paths;
+
+    QSplitter* m_split;
     QListWidget* m_list;
     QPushButton* m_importBtn;
     QPushButton* m_applyBtn;
     QPushButton* m_deleteBtn;
-    QPushButton* m_nextBtn;
+    QLabel* m_deleteWarning;
     PreviewWidget* m_preview;
+    QLabel* m_previewInfo;
     SchedulePreview* m_schedule;
+
+    mutable QHash<QString, QStringList> m_imageCache;
 };
 
 }  // namespace johona::gui

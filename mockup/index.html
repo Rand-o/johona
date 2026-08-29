@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Johona Wallpaper — GUI mockup</title>
+<style>
+:root {
+  --menubar: #313437;
+  --tabbar: #202326;
+  --content: #202326;
+  --list: #1d1f22;
+  --list-alt: #141618;
+  --text: #fcfcfc;
+  --text-dim: #b0b1b2;
+  --placeholder: #7c7d7f;
+  --sel: #84579f;
+  --sel-grad1: #936aac;
+  --sel-grad2: #774e90;
+  --tab-active: #383b3f;
+  --tab-inactive: #333539;
+  --border: #17191b;
+  --border-ctrl: #5a5d60;
+  --group-border: #3a3d40;
+  --lineedit: #16181a;
+  --spinbox: #222528;
+  --btn: #4a4b4d;
+  --btn-hi: #55575a;
+  --btn-border: #5f6164;
+  --strip: #373a3d;
+  --red: #d50314;
+  --chip-bg: #303336;
+  --seg-night-f: rgba(85,102,136,.133);  --seg-night-b: rgba(85,102,136,.35);
+  --seg-sunrise-f: rgba(245,194,107,.17); --seg-sunrise-b: rgba(245,194,107,.4);
+  --seg-day-f: rgba(126,200,240,.133);   --seg-day-b: rgba(126,200,240,.35);
+  --seg-sunset-f: rgba(240,149,90,.17);  --seg-sunset-b: rgba(240,149,90,.4);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: #101214;
+  display: flex; align-items: center; justify-content: center;
+  font-family: "Noto Sans", "DejaVu Sans", sans-serif;
+  font-size: 13px; color: var(--text);
+}
+#stage { position: relative; }
+#win {
+  width: 1200px; height: 700px;
+  background: var(--content);
+  display: flex; flex-direction: column;
+  border: 1px solid #000;
+  box-shadow: 0 12px 40px rgba(0,0,0,.6);
+  overflow: hidden;
+}
+/* ── title bar (host WM decoration, for reference) ─────────────────── */
+#titlebar {
+  height: 30px; background: #26282b; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; font-size: 12.5px; color: #d8d9da;
+  user-select: none;
+}
+#titlebar .tb-btns { position: absolute; right: 6px; top: 0; height: 100%; display: flex; }
+#titlebar .tb-btn {
+  width: 34px; height: 100%; display: flex; align-items: center; justify-content: center;
+  color: #9a9b9d; font-size: 13px;
+}
+#titlebar .tb-btn:hover { background: #3a3d40; }
+/* ── menu bar ───────────────────────────────────────────────────────── */
+#menubar {
+  height: 28px; background: var(--menubar); flex: none;
+  display: flex; align-items: stretch; user-select: none; position: relative; z-index: 50;
+}
+.menu {
+  display: flex; align-items: center; padding: 0 10px; cursor: default; color: #e6e7e8;
+}
+.menu:hover, .menu.open { background: #3d4043; }
+.menu u { text-decoration: none; border-bottom: 1px solid transparent; }
+/* dropdowns */
+.dropdown {
+  position: absolute; top: 28px; min-width: 190px;
+  background: #2a2d30; border: 1px solid var(--border-ctrl);
+  box-shadow: 0 6px 18px rgba(0,0,0,.5); display: none; z-index: 60;
+  padding: 3px 0;
+}
+.dropdown.open { display: block; }
+.dd-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 18px 5px 10px; cursor: default; white-space: nowrap;
+}
+.dd-item:hover { background: var(--sel); }
+.dd-item .sc { margin-left: auto; color: #9a9b9d; font-size: 12px; padding-left: 24px; }
+.dd-item:hover .sc { color: #e8e0f0; }
+.dd-item.disabled { color: #6f7173; }
+.dd-item.disabled:hover { background: none; }
+.dd-sep { height: 1px; background: #45484b; margin: 3px 0; }
+.dd-item svg { width: 16px; height: 16px; flex: none; }
+/* ── tab bar ────────────────────────────────────────────────────────── */
+#tabbar {
+  height: 36px; background: var(--tabbar); flex: none;
+  display: flex; align-items: flex-end; padding: 0 4px; gap: 4px;
+  user-select: none;
+}
+.tab {
+  height: 30px; display: flex; align-items: center; gap: 7px;
+  padding: 0 14px; background: var(--tab-inactive);
+  border: 1px solid var(--border); border-bottom: none;
+  border-radius: 4px 4px 0 0; color: #d8d9da; cursor: default; font-size: 13px;
+}
+.tab:hover { background: #383a3e; }
+.tab.active { background: var(--tab-active); color: var(--text); }
+.tab svg { width: 16px; height: 16px; }
+/* ── content ────────────────────────────────────────────────────────── */
+#content { flex: 1; position: relative; overflow: hidden; }
+.tabpage { position: absolute; inset: 0; display: none; }
+.tabpage.active { display: flex; }
+/* ── themes tab ─────────────────────────────────────────────────────── */
+#tab-themes { flex-direction: row; }
+#left {
+  width: 340px; flex: none; display: flex; flex-direction: column;
+  border-right: none;
+}
+#themetelist {
+  flex: 1; background: var(--list); overflow-y: auto;
+  border: 1px solid var(--border); border-right: none;
+}
+#themetelist::-webkit-scrollbar { width: 10px; }
+#themetelist::-webkit-scrollbar-track { background: var(--list-alt); }
+#themetelist::-webkit-scrollbar-thumb { background: #4a4d50; border-radius: 5px; }
+.tl-item {
+  height: 17px; line-height: 17px; padding: 0 6px; font-size: 12px;
+  color: var(--text); cursor: default; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tl-item:nth-child(odd) { background: var(--list); }
+.tl-item:nth-child(even) { background: var(--list-alt); }
+.tl-item:hover { background: #26292c; }
+.tl-item.selected { background: linear-gradient(180deg, var(--sel-grad1), var(--sel-grad2)); }
+#btnrow { display: flex; gap: 6px; padding: 6px 0 0 0; }
+#btnrow .spacer { flex: 1; }
+.qbtn {
+  height: 26px; max-width: 75px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  background: linear-gradient(180deg, var(--btn-hi), var(--btn));
+  border: 1px solid var(--btn-border); border-radius: 3px;
+  color: #e6e7e8; font-size: 12px; font-family: inherit; cursor: default;
+  padding: 0 8px; white-space: nowrap;
+}
+.qbtn:hover:not(:disabled) { background: linear-gradient(180deg, #5d5f62, #545659); }
+.qbtn:active:not(:disabled) { background: #3f4144; }
+.qbtn:disabled { color: #787a7c; background: #3a3c3f; border-color: #4a4c4f; }
+.qbtn svg { width: 14px; height: 14px; flex: none; }
+#deletewarn { color: var(--red); font-size: 12px; padding-top: 5px; display: none; }
+#sash { width: 7px; flex: none; background: var(--content); cursor: col-resize; position: relative; }
+#sash::after {
+  content: ""; position: absolute; left: 3px; top: 50%; transform: translateY(-50%);
+  width: 1px; height: 24px; background: #4a4d50;
+  box-shadow: -3px 0 0 -1px #4a4d50, 3px 0 0 -1px #4a4d50;
+}
+#right { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+#preview {
+  flex: 1; background: var(--content); position: relative; overflow: hidden;
+  min-height: 120px;
+}
+#preview img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: contain; opacity: 0; transition: opacity 1.2s ease-in-out;
+}
+#preview img.show { opacity: 1; }
+#preview .pv-msg {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: var(--placeholder); font-size: 13px;
+}
+#pvinfo {
+  flex: none; height: 20px; line-height: 20px; text-align: center;
+  font-size: 12px; color: var(--text);
+}
+/* ── schedule preview ───────────────────────────────────────────────── */
+#schedule {
+  flex: none; height: 120px; margin: 0 8px 6px 8px;
+  display: flex; flex-direction: column; gap: 3px;
+}
+#schedhead {
+  height: 22px; flex: none; display: flex; align-items: center;
+}
+#schedhead .title { font-size: 12px; font-weight: 600; color: var(--text); }
+#legend { margin-left: auto; display: flex; align-items: center; gap: 12px; padding-right: 4px; }
+.lg-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--placeholder); }
+.lg-swatch { width: 10px; height: 10px; border-radius: 2px; }
+#schedbar {
+  flex: none; height: 60px; position: relative;
+}
+#ruler {
+  position: absolute; top: 0; left: 0; right: 0; height: 16px;
+  border-bottom: 1px solid #56585b;
+}
+.tick { position: absolute; bottom: 0; width: 1px; background: #56585b; }
+.tick.major { background: #6a6c6f; height: 7px; }
+.tick.minor { height: 4px; }
+.tick-label {
+  position: absolute; bottom: 1px; font-size: 10px; color: var(--placeholder);
+  transform: translateX(3px);
+}
+#strip {
+  position: absolute; top: 20px; left: 0; right: 0; height: 40px;
+}
+.seg {
+  position: absolute; top: 0; height: 40px; border-radius: 3px;
+  display: flex; align-items: center; gap: 6px; padding: 0 6px;
+  overflow: hidden;
+}
+.seg img {
+  width: 28px; height: 28px; object-fit: cover; border-radius: 3px; flex: none;
+  border: 1px solid rgba(0,0,0,.5);
+}
+.seg .t { font-size: 11px; color: var(--text); white-space: nowrap; }
+.seg.night   { background: var(--seg-night-f);   border: 1px solid var(--seg-night-b); }
+.seg.sunrise { background: var(--seg-sunrise-f); border: 1px solid var(--seg-sunrise-b); }
+.seg.day     { background: var(--seg-day-f);     border: 1px solid var(--seg-day-b); }
+.seg.sunset  { background: var(--seg-sunset-f);  border: 1px solid var(--seg-sunset-b); }
+#marker { position: absolute; top: 0; width: 2px; height: 60px; background: var(--sel); z-index: 5; }
+#marker .dot {
+  position: absolute; top: 4px; left: -3px; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--sel); border: 2px solid var(--content);
+}
+#chip {
+  position: absolute; top: 1px; height: 15px; line-height: 15px;
+  background: var(--sel); color: #fff; font-size: 10px; font-weight: 700;
+  border-radius: 3px; padding: 0 5px; white-space: nowrap;
+}
+#schedfoot {
+  flex: none; height: 20px; line-height: 20px; font-size: 11px;
+  color: var(--placeholder); white-space: nowrap; overflow: hidden;
+}
+/* ── settings tab ───────────────────────────────────────────────────── */
+#tab-settings { flex-direction: column; }
+#settings-scroll { flex: 1; overflow-y: auto; padding: 10px 16px 0 16px; }
+#settings-scroll::-webkit-scrollbar { width: 10px; }
+#settings-scroll::-webkit-scrollbar-thumb { background: #4a4d50; border-radius: 5px; }
+#settings-body { display: flex; flex-direction: column; gap: 16px; padding-bottom: 16px; }
+.group {
+  border: 1px solid var(--group-border); border-radius: 4px;
+  padding: 14px 16px 12px 16px; position: relative;
+}
+.group > .gtitle {
+  position: absolute; top: -9px; left: 10px; background: var(--content);
+  padding: 0 5px; font-size: 12.5px; color: #e6e7e8;
+}
+.frow { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.frow:first-of-type { margin-top: 2px; }
+.frow label.fl { width: 92px; flex: none; font-size: 12px; color: #e6e7e8; white-space: nowrap; }
+.led {
+  flex: 1; height: 26px; background: var(--lineedit);
+  border: 1px solid var(--border-ctrl); border-radius: 3px;
+  display: flex; align-items: center; padding: 0 8px;
+  font-size: 12px; color: var(--text); min-width: 0;
+}
+.led input {
+  background: none; border: none; outline: none; width: 100%;
+  font: inherit; color: var(--text);
+}
+.spin {
+  flex: 1; height: 26px; background: var(--spinbox);
+  border: 1px solid var(--border-ctrl); border-radius: 3px;
+  display: flex; align-items: center; padding: 0 4px 0 8px;
+  font-size: 12px; color: var(--text); min-width: 0;
+}
+.spin .val { flex: 1; overflow: hidden; white-space: nowrap; }
+.spin .arrows { display: flex; flex-direction: column; gap: 1px; flex: none; }
+.spin .arrows button {
+  width: 16px; height: 11px; background: #3a3d40; border: 1px solid var(--border-ctrl);
+  color: #c8c9ca; font-size: 7px; line-height: 1; cursor: default;
+  display: flex; align-items: center; justify-content: center;
+}
+.spin .arrows button:first-child { border-radius: 2px 2px 0 0; }
+.spin .arrows button:last-child { border-radius: 0 0 2px 2px; }
+.cbx { display: flex; align-items: center; gap: 8px; cursor: default; font-size: 12px; color: #e6e7e8; }
+.cbx .box {
+  width: 15px; height: 15px; flex: none; background: var(--spinbox);
+  border: 1px solid var(--border-ctrl); border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  color: transparent; font-size: 11px;
+}
+.cbx.on .box { color: #fff; }
+.combo {
+  flex: 1; height: 26px; background: var(--lineedit);
+  border: 1px solid var(--border-ctrl); border-radius: 3px;
+  display: flex; align-items: center; padding: 0 8px;
+  font-size: 12px; color: var(--text); position: relative;
+}
+.combo .cval { flex: 1; }
+.combo .carrow { color: #c8c9ca; font-size: 10px; }
+#settings-btnrow {
+  flex: none; display: flex; justify-content: flex-end; padding: 10px 16px;
+  border-top: 1px solid var(--border);
+}
+.qbtn.save { max-width: none; padding: 0 14px; height: 28px; }
+/* ── scheduler tab ──────────────────────────────────────────────────── */
+#tab-scheduler { flex-direction: column; padding: 10px 16px; gap: 12px; }
+#sched-status-group { flex: none; }
+#bigstatus {
+  height: 56px; display: flex; align-items: center; justify-content: center;
+  font-size: 17px; color: var(--text);
+}
+#bigstatus.running { color: #b58ad2; }
+#ss-row { display: flex; gap: 8px; padding: 0 16px 12px 16px; }
+#ss-row .qbtn { max-width: none; padding: 0 14px; }
+#log-group { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+#log {
+  flex: 1; background: var(--lineedit); border: 1px solid var(--border-ctrl);
+  border-radius: 3px; overflow-y: auto; padding: 6px 10px;
+  font-family: "DejaVu Sans Mono", "Noto Sans Mono", monospace; font-size: 12px;
+  color: #d8d9da; line-height: 1.55;
+}
+#log::-webkit-scrollbar { width: 10px; }
+#log::-webkit-scrollbar-thumb { background: #4a4d50; border-radius: 5px; }
+/* ── status bar ─────────────────────────────────────────────────────── */
+#statusbar {
+  height: 24px; flex: none; background: var(--tabbar);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 10px;
+  font-size: 12px; color: var(--text-dim);
+}
+/* ── modal ──────────────────────────────────────────────────────────── */
+#modal-back {
+  position: absolute; inset: 0; background: rgba(0,0,0,.45);
+  display: none; align-items: center; justify-content: center; z-index: 100;
+}
+#modal-back.open { display: flex; }
+#modal {
+  width: 420px; background: #2a2d30; border: 1px solid var(--border-ctrl);
+  border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,.6);
+}
+#modal .mtitle {
+  padding: 10px 14px; font-size: 13px; font-weight: 600;
+  border-bottom: 1px solid #3a3d40;
+}
+#modal .mbody { padding: 14px; font-size: 12.5px; line-height: 1.5; color: #e6e7e8; }
+#modal .mbtns { display: flex; justify-content: flex-end; gap: 8px; padding: 0 14px 14px 14px; }
+#modal .qbtn { max-width: none; padding: 0 16px; }
+#mockup-note {
+  position: absolute; left: 0; right: 0; bottom: -30px;
+  text-align: center; color: #6a6c6f; font-size: 12px;
+}
+</style>
+</head>
+<body>
+<div id="stage">
+<div id="win">
+
+  <div id="titlebar">
+    Johona Wallpaper
+    <div class="tb-btns">
+      <div class="tb-btn">─</div><div class="tb-btn">□</div><div class="tb-btn">✕</div>
+    </div>
+  </div>
+
+  <div id="menubar">
+    <span class="menu" data-menu="file"><u>F</u>ile</span>
+    <span class="menu" data-menu="sched">S<u>c</u>heduler</span>
+    <span class="menu" data-menu="help"><u>H</u>elp</span>
+  </div>
+
+  <div id="tabbar">
+    <div class="tab active" data-tab="themes">
+      <svg viewBox="0 0 16 16"><rect x="1" y="2" width="14" height="12" rx="1.5" fill="none" stroke="#9aa0a6" stroke-width="1.2"/><circle cx="5.2" cy="6" r="1.4" fill="#e8b04a"/><path d="M2 12.5 L6.5 8 L9.5 11 L11.5 9 L14 12.5 Z" fill="#5aa0c8"/></svg>
+      Themes
+    </div>
+    <div class="tab" data-tab="settings">
+      <svg viewBox="0 0 16 16" fill="none" stroke="#9aa0a6" stroke-width="1.3"><line x1="1.5" y1="4" x2="14.5" y2="4"/><line x1="1.5" y1="8" x2="14.5" y2="8"/><line x1="1.5" y1="12" x2="14.5" y2="12"/><circle cx="10.5" cy="4" r="1.8" fill="#2a2d30"/><circle cx="5" cy="8" r="1.8" fill="#2a2d30"/><circle cx="11.5" cy="12" r="1.8" fill="#2a2d30"/></svg>
+      Settings
+    </div>
+    <div class="tab" data-tab="scheduler">
+      <svg viewBox="0 0 16 16" fill="none" stroke="#9aa0a6" stroke-width="1.3"><circle cx="8" cy="9" r="5.5"/><line x1="8" y1="9" x2="8" y2="6"/><line x1="8" y1="9" x2="10.3" y2="10.5"/><line x1="6.5" y1="1.8" x2="9.5" y2="1.8"/></svg>
+      Scheduler
+    </div>
+  </div>
+
+  <div id="content">
+
+    <!-- ══ THEMES ═══════════════════════════════════════════════════ -->
+    <div id="tab-themes" class="tabpage active">
+      <div id="left">
+        <div id="themetelist"></div>
+        <div id="btnrow">
+          <button class="qbtn" id="btn-import" title="Import a .ddw or .zip theme file">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M9.5 1.5 H3.5 a1 1 0 0 0 -1 1 v11 a1 1 0 0 0 1 1 h9 a1 1 0 0 0 1 -1 V5.5 Z"/><path d="M9.5 1.5 V5.5 H13.5"/><path d="M8 7.5 V11.5 M6 9.5 L8 11.5 L10 9.5"/></svg>
+            Import…
+          </button>
+          <button class="qbtn" id="btn-apply" title="Set the selected theme as your wallpaper">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2.5 8.5 L6 12 L13.5 4.5"/></svg>
+            Apply
+          </button>
+          <button class="qbtn" id="btn-delete" title="Delete the selected theme">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2.5 4 H13.5"/><path d="M6.5 4 V2.5 H9.5 V4"/><path d="M4 4 L4.8 13.5 H11.2 L12 4"/><line x1="6.5" y1="6.5" x2="6.8" y2="11"/><line x1="9.5" y1="6.5" x2="9.2" y2="11"/></svg>
+            Delete
+          </button>
+        </div>
+        <div id="deletewarn">Scheduler must be stopped to delete themes</div>
+      </div>
+      <div id="sash"></div>
+      <div id="right">
+        <div id="preview">
+          <img id="pv-a" alt="">
+          <img id="pv-b" alt="">
+          <div class="pv-msg" id="pv-msg" style="display:none">Select a theme to preview</div>
+        </div>
+        <div id="pvinfo"></div>
+        <div id="schedule">
+          <div id="schedhead">
+            <span class="title">Schedule</span>
+            <span id="legend">
+              <span class="lg-item"><span class="lg-swatch" style="background:rgba(85,102,136,.55);border:1px solid rgba(85,102,136,.8)"></span>Night</span>
+              <span class="lg-item"><span class="lg-swatch" style="background:rgba(245,194,107,.5);border:1px solid rgba(245,194,107,.8)"></span>Sunrise</span>
+              <span class="lg-item"><span class="lg-swatch" style="background:rgba(126,200,240,.45);border:1px solid rgba(126,200,240,.8)"></span>Day</span>
+              <span class="lg-item"><span class="lg-swatch" style="background:rgba(240,149,90,.5);border:1px solid rgba(240,149,90,.8)"></span>Sunset</span>
+            </span>
+          </div>
+          <div id="schedbar">
+            <div id="ruler"></div>
+            <div id="strip"></div>
+            <div id="marker"><div class="dot"></div><div id="chip">--:--</div></div>
+          </div>
+          <div id="schedfoot"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SETTINGS ═════════════════════════════════════════════════ -->
+    <div id="tab-settings" class="tabpage">
+      <div id="settings-scroll">
+        <div id="settings-body">
+
+          <div class="group">
+            <span class="gtitle">Scheduler</span>
+            <div class="frow">
+              <label class="fl">Cycle interval:</label>
+              <div class="spin"><span class="val" id="v-interval">60 s</span>
+                <span class="arrows"><button>▲</button><button>▼</button></span>
+              </div>
+            </div>
+            <div class="frow"><span class="cbx on" data-cbx><span class="box">✓</span>Enable cycle task (runs every interval)</span></div>
+            <div class="frow"><span class="cbx on" data-cbx><span class="box">✓</span>Enable daily theme shuffle</span></div>
+            <div class="frow"><span class="cbx on" data-cbx><span class="box">✓</span>Start scheduler on app launch</span></div>
+          </div>
+
+          <div class="group">
+            <span class="gtitle">Location</span>
+            <div class="frow">
+              <label class="fl">Timezone:</label>
+              <div class="led"><input id="v-tz" value="America/Phoenix" spellcheck="false"></div>
+            </div>
+            <div class="frow">
+              <div class="spin" style="flex:1.2"><span class="val">33.4484</span>
+                <span class="arrows"><button>▲</button><button>▼</button></span>
+              </div>
+              <label class="fl" style="width:auto">Latitude</label>
+              <div class="spin" style="flex:1.2"><span class="val">-112.0740</span>
+                <span class="arrows"><button>▲</button><button>▼</button></span>
+              </div>
+              <label class="fl" style="width:auto">Longitude</label>
+              <button class="qbtn" id="btn-detect" style="max-width:none;padding:0 10px">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M13.5 8 A5.5 5.5 0 1 1 8 2.5"/><path d="M8 2.5 L11 1 M8 2.5 L10.5 4.5"/></svg>
+                Auto-detect
+              </button>
+            </div>
+          </div>
+
+          <div class="group">
+            <span class="gtitle">Wallpaper backend</span>
+            <div class="frow">
+              <label class="fl">Backend:</label>
+              <div class="combo"><span class="cval">Auto (detected)</span><span class="carrow">▼</span></div>
+            </div>
+          </div>
+
+          <div class="group">
+            <span class="gtitle">Appearance</span>
+            <div class="frow"><span class="cbx on" data-cbx><span class="box">✓</span>Start automatically at login</span></div>
+            <div class="frow">
+              <label class="fl">Color scheme:</label>
+              <div class="combo"><span class="cval">System</span><span class="carrow">▼</span></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div id="settings-btnrow">
+        <button class="qbtn save" id="btn-save">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2.5 2.5 H11 L13.5 5 V13.5 H2.5 Z"/><path d="M4.5 2.5 V6 H10 V2.5"/><rect x="4.5" y="9" width="7" height="4.5"/></svg>
+          Save Settings
+        </button>
+      </div>
+    </div>
+
+    <!-- ══ SCHEDULER ════════════════════════════════════════════════ -->
+    <div id="tab-scheduler" class="tabpage">
+      <div class="group" id="sched-status-group">
+        <span class="gtitle">Status</span>
+        <div id="bigstatus">Running</div>
+        <div id="ss-row">
+          <button class="qbtn" id="btn-start">
+            <svg viewBox="0 0 16 16"><path d="M4 2.5 L13 8 L4 13.5 Z" fill="currentColor"/></svg>
+            Start
+          </button>
+          <button class="qbtn" id="btn-stop">
+            <svg viewBox="0 0 16 16"><rect x="3.5" y="3.5" width="9" height="9" rx="1" fill="currentColor"/></svg>
+            Stop
+          </button>
+        </div>
+      </div>
+      <div class="group" id="log-group">
+        <span class="gtitle">Event Log</span>
+        <div id="log"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="statusbar"><span id="statusmsg">Ready</span></div>
+
+  <!-- dropdown menus -->
+  <div class="dropdown" id="dd-file" style="left:0">
+    <div class="dd-item" data-act="import">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M9.5 1.5 H3.5 a1 1 0 0 0 -1 1 v11 a1 1 0 0 0 1 1 h9 a1 1 0 0 0 1 -1 V5.5 Z"/><path d="M9.5 1.5 V5.5 H13.5"/><path d="M8 7.5 V11.5 M6 9.5 L8 11.5 L10 9.5"/></svg>
+      Import Theme…<span class="sc">Ctrl+I</span></div>
+    <div class="dd-sep"></div>
+    <div class="dd-item" data-act="quit">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1.5 V7"/><path d="M4.5 3.5 A5.5 5.5 0 1 0 11.5 3.5"/></svg>
+      Quit<span class="sc">Ctrl+Q</span></div>
+  </div>
+  <div class="dropdown" id="dd-sched" style="left:40px">
+    <div class="dd-item" data-act="sched-start">
+      <svg viewBox="0 0 16 16"><path d="M4 2.5 L13 8 L4 13.5 Z" fill="currentColor"/></svg>
+      Start</div>
+    <div class="dd-item disabled" data-act="sched-stop">
+      <svg viewBox="0 0 16 16"><rect x="3.5" y="3.5" width="9" height="9" rx="1" fill="currentColor"/></svg>
+      Stop</div>
+  </div>
+  <div class="dropdown" id="dd-help" style="left:118px">
+    <div class="dd-item" data-act="about">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="8" cy="8" r="6.5"/><line x1="8" y1="7" x2="8" y2="11.5"/><circle cx="8" cy="4.5" r=".8" fill="currentColor" stroke="none"/></svg>
+      About…</div>
+  </div>
+
+  <!-- modal -->
+  <div id="modal-back">
+    <div id="modal">
+      <div class="mtitle" id="m-title"></div>
+      <div class="mbody" id="m-body"></div>
+      <div class="mbtns" id="m-btns"></div>
+    </div>
+  </div>
+
+  <div id="mockup-note">Static mockup — layout reference for the C++/Qt rewrite (colors sampled from kWallpaper screenshots)</div>
+</div>
+</div>
+
+<script>
+"use strict";
+const THEMES = [{"folder": "24hr-AboveClouds", "name": "Above Clouds", "images": ["24hr-AboveClouds_1.jpeg", "24hr-AboveClouds_2.jpeg", "24hr-AboveClouds_3.jpeg", "24hr-AboveClouds_4.jpeg", "24hr-AboveClouds_5.jpeg", "24hr-AboveClouds_6.jpeg", "24hr-AboveClouds_7.jpeg", "24hr-AboveClouds_8.jpeg", "24hr-AboveClouds_9.jpeg", "24hr-AboveClouds_10.jpeg", "24hr-AboveClouds_11.jpeg", "24hr-AboveClouds_12.jpeg", "24hr-AboveClouds_13.jpeg", "24hr-AboveClouds_14.jpeg", "24hr-AboveClouds_15.jpeg", "24hr-AboveClouds_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-AlabamaHills", "name": "Alabama Hills", "images": ["24hr-AlabamaHills_1.jpeg", "24hr-AlabamaHills_2.jpeg", "24hr-AlabamaHills_3.jpeg", "24hr-AlabamaHills_4.jpeg", "24hr-AlabamaHills_5.jpeg", "24hr-AlabamaHills_6.jpeg", "24hr-AlabamaHills_7.jpeg", "24hr-AlabamaHills_8.jpeg", "24hr-AlabamaHills_9.jpeg", "24hr-AlabamaHills_10.jpeg", "24hr-AlabamaHills_11.jpeg", "24hr-AlabamaHills_12.jpeg", "24hr-AlabamaHills_13.jpeg", "24hr-AlabamaHills_14.jpeg", "24hr-AlabamaHills_15.jpeg", "24hr-AlabamaHills_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-AlabamaHills-1", "name": "Alabama Hills 1", "images": ["24hr-AlabamaHills-1_1.jpeg", "24hr-AlabamaHills-1_2.jpeg", "24hr-AlabamaHills-1_3.jpeg", "24hr-AlabamaHills-1_4.jpeg", "24hr-AlabamaHills-1_5.jpeg", "24hr-AlabamaHills-1_6.jpeg", "24hr-AlabamaHills-1_7.jpeg", "24hr-AlabamaHills-1_8.jpeg", "24hr-AlabamaHills-1_9.jpeg", "24hr-AlabamaHills-1_10.jpeg", "24hr-AlabamaHills-1_11.jpeg", "24hr-AlabamaHills-1_12.jpeg", "24hr-AlabamaHills-1_13.jpeg", "24hr-AlabamaHills-1_14.jpeg", "24hr-AlabamaHills-1_15.jpeg", "24hr-AlabamaHills-1_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Amphitheater-Of-Pompeii", "name": "Amphitheater Of Pompeii", "images": ["24hr-Amphitheater-Of-Pompeii_1.jpeg", "24hr-Amphitheater-Of-Pompeii_2.jpeg", "24hr-Amphitheater-Of-Pompeii_3.jpeg", "24hr-Amphitheater-Of-Pompeii_4.jpeg", "24hr-Amphitheater-Of-Pompeii_5.jpeg", "24hr-Amphitheater-Of-Pompeii_6.jpeg", "24hr-Amphitheater-Of-Pompeii_7.jpeg", "24hr-Amphitheater-Of-Pompeii_8.jpeg", "24hr-Amphitheater-Of-Pompeii_9.jpeg", "24hr-Amphitheater-Of-Pompeii_10.jpeg", "24hr-Amphitheater-Of-Pompeii_11.jpeg", "24hr-Amphitheater-Of-Pompeii_12.jpeg", "24hr-Amphitheater-Of-Pompeii_13.jpeg", "24hr-Amphitheater-Of-Pompeii_14.jpeg", "24hr-Amphitheater-Of-Pompeii_15.jpeg", "24hr-Amphitheater-Of-Pompeii_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Australia-Rose-Bay", "name": "Australia Rose Bay", "images": ["24hr-Australia-Rose-Bay_1.jpeg", "24hr-Australia-Rose-Bay_2.jpeg", "24hr-Australia-Rose-Bay_3.jpeg", "24hr-Australia-Rose-Bay_4.jpeg", "24hr-Australia-Rose-Bay_5.jpeg", "24hr-Australia-Rose-Bay_6.jpeg", "24hr-Australia-Rose-Bay_7.jpeg", "24hr-Australia-Rose-Bay_8.jpeg", "24hr-Australia-Rose-Bay_9.jpeg", "24hr-Australia-Rose-Bay_10.jpeg", "24hr-Australia-Rose-Bay_11.jpeg", "24hr-Australia-Rose-Bay_12.jpeg", "24hr-Australia-Rose-Bay_13.jpeg", "24hr-Australia-Rose-Bay_14.jpeg", "24hr-Australia-Rose-Bay_15.jpeg", "24hr-Australia-Rose-Bay_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Bangkok-2025-1", "name": "Bangkok 2025-1", "images": ["24hr-Bangkok-2025-1_1.jpeg", "24hr-Bangkok-2025-1_2.jpeg", "24hr-Bangkok-2025-1_3.jpeg", "24hr-Bangkok-2025-1_4.jpeg", "24hr-Bangkok-2025-1_5.jpeg", "24hr-Bangkok-2025-1_6.jpeg", "24hr-Bangkok-2025-1_7.jpeg", "24hr-Bangkok-2025-1_8.jpeg", "24hr-Bangkok-2025-1_9.jpeg", "24hr-Bangkok-2025-1_10.jpeg", "24hr-Bangkok-2025-1_11.jpeg", "24hr-Bangkok-2025-1_12.jpeg", "24hr-Bangkok-2025-1_13.jpeg", "24hr-Bangkok-2025-1_14.jpeg", "24hr-Bangkok-2025-1_15.jpeg", "24hr-Bangkok-2025-1_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Bangkok-2025-2", "name": "Bangkok 2025-2", "images": ["24hr-Bangkok-2025-2_1.jpeg", "24hr-Bangkok-2025-2_2.jpeg", "24hr-Bangkok-2025-2_3.jpeg", "24hr-Bangkok-2025-2_4.jpeg", "24hr-Bangkok-2025-2_5.jpeg", "24hr-Bangkok-2025-2_6.jpeg", "24hr-Bangkok-2025-2_7.jpeg", "24hr-Bangkok-2025-2_8.jpeg", "24hr-Bangkok-2025-2_9.jpeg", "24hr-Bangkok-2025-2_10.jpeg", "24hr-Bangkok-2025-2_11.jpeg", "24hr-Bangkok-2025-2_12.jpeg", "24hr-Bangkok-2025-2_13.jpeg", "24hr-Bangkok-2025-2_14.jpeg", "24hr-Bangkok-2025-2_15.jpeg", "24hr-Bangkok-2025-2_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-BigSur-1", "name": "Big Sur #1", "images": ["24hr-BigSur-1_1.jpeg", "24hr-BigSur-1_2.jpeg", "24hr-BigSur-1_3.jpeg", "24hr-BigSur-1_4.jpeg", "24hr-BigSur-1_5.jpeg", "24hr-BigSur-1_6.jpeg", "24hr-BigSur-1_7.jpeg", "24hr-BigSur-1_8.jpeg", "24hr-BigSur-1_9.jpeg", "24hr-BigSur-1_10.jpeg", "24hr-BigSur-1_11.jpeg", "24hr-BigSur-1_12.jpeg", "24hr-BigSur-1_13.jpeg", "24hr-BigSur-1_14.jpeg", "24hr-BigSur-1_15.jpeg", "24hr-BigSur-1_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-BigSur-3", "name": "Big Sur #3", "images": ["24hr-BigSur-3_1.jpeg", "24hr-BigSur-3_2.jpeg", "24hr-BigSur-3_3.jpeg", "24hr-BigSur-3_4.jpeg", "24hr-BigSur-3_5.jpeg", "24hr-BigSur-3_6.jpeg", "24hr-BigSur-3_7.jpeg", "24hr-BigSur-3_8.jpeg", "24hr-BigSur-3_9.jpeg", "24hr-BigSur-3_10.jpeg", "24hr-BigSur-3_11.jpeg", "24hr-BigSur-3_12.jpeg", "24hr-BigSur-3_13.jpeg", "24hr-BigSur-3_14.jpeg", "24hr-BigSur-3_15.jpeg", "24hr-BigSur-3_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Boston-Charles-River-1", "name": "Boston Charles River 1", "images": ["24hr-Boston-Charles-River-1_1.jpeg", "24hr-Boston-Charles-River-1_2.jpeg", "24hr-Boston-Charles-River-1_3.jpeg", "24hr-Boston-Charles-River-1_4.jpeg", "24hr-Boston-Charles-River-1_5.jpeg", "24hr-Boston-Charles-River-1_6.jpeg", "24hr-Boston-Charles-River-1_7.jpeg", "24hr-Boston-Charles-River-1_8.jpeg", "24hr-Boston-Charles-River-1_9.jpeg", "24hr-Boston-Charles-River-1_10.jpeg", "24hr-Boston-Charles-River-1_11.jpeg", "24hr-Boston-Charles-River-1_12.jpeg", "24hr-Boston-Charles-River-1_13.jpeg", "24hr-Boston-Charles-River-1_14.jpeg", "24hr-Boston-Charles-River-1_15.jpeg", "24hr-Boston-Charles-River-1_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Boston-Charles-River-2", "name": "Boston Charles River 2", "images": ["24hr-Boston-Charles-River-2_1.jpeg", "24hr-Boston-Charles-River-2_2.jpeg", "24hr-Boston-Charles-River-2_3.jpeg", "24hr-Boston-Charles-River-2_4.jpeg", "24hr-Boston-Charles-River-2_5.jpeg", "24hr-Boston-Charles-River-2_6.jpeg", "24hr-Boston-Charles-River-2_7.jpeg", "24hr-Boston-Charles-River-2_8.jpeg", "24hr-Boston-Charles-River-2_9.jpeg", "24hr-Boston-Charles-River-2_10.jpeg", "24hr-Boston-Charles-River-2_11.jpeg", "24hr-Boston-Charles-River-2_12.jpeg", "24hr-Boston-Charles-River-2_13.jpeg", "24hr-Boston-Charles-River-2_14.jpeg", "24hr-Boston-Charles-River-2_15.jpeg", "24hr-Boston-Charles-River-2_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Boston-Downtown", "name": "Boston Downtown", "images": ["24hr-Boston-Downtown_1.jpeg", "24hr-Boston-Downtown_2.jpeg", "24hr-Boston-Downtown_3.jpeg", "24hr-Boston-Downtown_4.jpeg", "24hr-Boston-Downtown_5.jpeg", "24hr-Boston-Downtown_6.jpeg", "24hr-Boston-Downtown_7.jpeg", "24hr-Boston-Downtown_8.jpeg", "24hr-Boston-Downtown_9.jpeg", "24hr-Boston-Downtown_10.jpeg", "24hr-Boston-Downtown_11.jpeg", "24hr-Boston-Downtown_12.jpeg", "24hr-Boston-Downtown_13.jpeg", "24hr-Boston-Downtown_14.jpeg", "24hr-Boston-Downtown_15.jpeg", "24hr-Boston-Downtown_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Bristlecone", "name": "Bristlecone Pine", "images": ["24hr-Bristlecone_1.jpeg", "24hr-Bristlecone_2.jpeg", "24hr-Bristlecone_3.jpeg", "24hr-Bristlecone_4.jpeg", "24hr-Bristlecone_5.jpeg", "24hr-Bristlecone_6.jpeg", "24hr-Bristlecone_7.jpeg", "24hr-Bristlecone_8.jpeg", "24hr-Bristlecone_9.jpeg", "24hr-Bristlecone_10.jpeg", "24hr-Bristlecone_11.jpeg", "24hr-Bristlecone_12.jpeg", "24hr-Bristlecone_13.jpeg", "24hr-Bristlecone_14.jpeg", "24hr-Bristlecone_15.jpeg", "24hr-Bristlecone_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-BuenosAires-1", "name": "Buenos Aires #1", "images": ["24hr-BuenosAires-1_1.jpeg", "24hr-BuenosAires-1_2.jpeg", "24hr-BuenosAires-1_3.jpeg", "24hr-BuenosAires-1_4.jpeg", "24hr-BuenosAires-1_5.jpeg", "24hr-BuenosAires-1_6.jpeg", "24hr-BuenosAires-1_7.jpeg", "24hr-BuenosAires-1_8.jpeg", "24hr-BuenosAires-1_9.jpeg", "24hr-BuenosAires-1_10.jpeg", "24hr-BuenosAires-1_11.jpeg", "24hr-BuenosAires-1_12.jpeg", "24hr-BuenosAires-1_13.jpeg", "24hr-BuenosAires-1_14.jpeg", "24hr-BuenosAires-1_15.jpeg", "24hr-BuenosAires-1_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-BuenosAires-2", "name": "Buenos Aires #2", "images": ["24hr-BuenosAires-2_1.jpeg", "24hr-BuenosAires-2_2.jpeg", "24hr-BuenosAires-2_3.jpeg", "24hr-BuenosAires-2_4.jpeg", "24hr-BuenosAires-2_5.jpeg", "24hr-BuenosAires-2_6.jpeg", "24hr-BuenosAires-2_7.jpeg", "24hr-BuenosAires-2_8.jpeg", "24hr-BuenosAires-2_9.jpeg", "24hr-BuenosAires-2_10.jpeg", "24hr-BuenosAires-2_11.jpeg", "24hr-BuenosAires-2_12.jpeg", "24hr-BuenosAires-2_13.jpeg", "24hr-BuenosAires-2_14.jpeg", "24hr-BuenosAires-2_15.jpeg", "24hr-BuenosAires-2_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-BuenosAires-3", "name": "Buenos Aires #3", "images": ["24hr-BuenosAires-3_1.jpeg", "24hr-BuenosAires-3_2.jpeg", "24hr-BuenosAires-3_3.jpeg", "24hr-BuenosAires-3_4.jpeg", "24hr-BuenosAires-3_5.jpeg", "24hr-BuenosAires-3_6.jpeg", "24hr-BuenosAires-3_7.jpeg", "24hr-BuenosAires-3_8.jpeg", "24hr-BuenosAires-3_9.jpeg", "24hr-BuenosAires-3_10.jpeg", "24hr-BuenosAires-3_11.jpeg", "24hr-BuenosAires-3_12.jpeg", "24hr-BuenosAires-3_13.jpeg", "24hr-BuenosAires-3_14.jpeg", "24hr-BuenosAires-3_15.jpeg", "24hr-BuenosAires-3_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-California-Highland-Lakes", "name": "California Highland Lakes", "images": ["24hr-California-Highland-Lakes_1.jpeg", "24hr-California-Highland-Lakes_2.jpeg", "24hr-California-Highland-Lakes_3.jpeg", "24hr-California-Highland-Lakes_4.jpeg", "24hr-California-Highland-Lakes_5.jpeg", "24hr-California-Highland-Lakes_6.jpeg", "24hr-California-Highland-Lakes_7.jpeg", "24hr-California-Highland-Lakes_8.jpeg", "24hr-California-Highland-Lakes_9.jpeg", "24hr-California-Highland-Lakes_10.jpeg", "24hr-California-Highland-Lakes_11.jpeg", "24hr-California-Highland-Lakes_12.jpeg", "24hr-California-Highland-Lakes_13.jpeg", "24hr-California-Highland-Lakes_14.jpeg", "24hr-California-Highland-Lakes_15.jpeg", "24hr-California-Highland-Lakes_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-California-Highland-Lakes-2023", "name": "California Highland Lakes 2023", "images": ["24hr-California-Highland-Lakes-2023_1.jpeg", "24hr-California-Highland-Lakes-2023_2.jpeg", "24hr-California-Highland-Lakes-2023_3.jpeg", "24hr-California-Highland-Lakes-2023_4.jpeg", "24hr-California-Highland-Lakes-2023_5.jpeg", "24hr-California-Highland-Lakes-2023_6.jpeg", "24hr-California-Highland-Lakes-2023_7.jpeg", "24hr-California-Highland-Lakes-2023_8.jpeg", "24hr-California-Highland-Lakes-2023_9.jpeg", "24hr-California-Highland-Lakes-2023_10.jpeg", "24hr-California-Highland-Lakes-2023_11.jpeg", "24hr-California-Highland-Lakes-2023_12.jpeg", "24hr-California-Highland-Lakes-2023_13.jpeg", "24hr-California-Highland-Lakes-2023_14.jpeg", "24hr-California-Highland-Lakes-2023_15.jpeg", "24hr-California-Highland-Lakes-2023_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-California-Malibu-Pch-1", "name": "California Malibu Pch 1", "images": ["24hr-California-Malibu-Pch-1_1.jpeg", "24hr-California-Malibu-Pch-1_2.jpeg", "24hr-California-Malibu-Pch-1_3.jpeg", "24hr-California-Malibu-Pch-1_4.jpeg", "24hr-California-Malibu-Pch-1_5.jpeg", "24hr-California-Malibu-Pch-1_6.jpeg", "24hr-California-Malibu-Pch-1_7.jpeg", "24hr-California-Malibu-Pch-1_8.jpeg", "24hr-California-Malibu-Pch-1_9.jpeg", "24hr-California-Malibu-Pch-1_10.jpeg", "24hr-California-Malibu-Pch-1_11.jpeg", "24hr-California-Malibu-Pch-1_12.jpeg", "24hr-California-Malibu-Pch-1_13.jpeg", "24hr-California-Malibu-Pch-1_14.jpeg", "24hr-California-Malibu-Pch-1_15.jpeg", "24hr-California-Malibu-Pch-1_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-California-Mojave-Preserve-Mid-Hills", "name": "California Mojave Preserve Mid Hills", "images": ["24hr-California-Mojave-Preserve-Mid-Hills_1.jpeg", "24hr-California-Mojave-Preserve-Mid-Hills_2.jpeg", "24hr-California-Mojave-Preserve-Mid-Hills_3.jpeg", "24hr-California-Mojave-Preserve-Mid-Hills_4.jpeg", "24hr-California-Mojave-Preserve-Mid-Hills_5.jpeg", "24hr-California-Mojave-Preserve-Mid-Hills_6.jpeg", "24hr-California-Mojave-Preserve-Mid-Hills_7.jpeg", "24hr-California-Mojave-Preserve-Mid-Hills_8.jpeg", "24hr-California-Mojave-Preserve-Mid-Hills_9.jpeg", "24hr-California-Mojave-Preserve-Mid-Hills_10.jpeg", "24hr-California-Mojave-Preserve-Mid-Hills_11.jpeg", "24hr-California-Mojave-Preserve-Mid-Hills_12.jpeg", "24hr-California-Mojave-Preserve-Mid-Hills_13.jpeg", "24hr-California-Mojave-Preserve-Mid-Hills_14.jpeg", "24hr-California-Mojave-Preserve-Mid-Hills_15.jpeg", "24hr-California-Mojave-Preserve-Mid-Hills_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-California-Sf-2023Mix", "name": "California Sf 2023 Mix", "images": ["24hr-California-Sf-2023Mix_1.jpeg", "24hr-California-Sf-2023Mix_2.jpeg", "24hr-California-Sf-2023Mix_3.jpeg", "24hr-California-Sf-2023Mix_4.jpeg", "24hr-California-Sf-2023Mix_5.jpeg", "24hr-California-Sf-2023Mix_6.jpeg", "24hr-California-Sf-2023Mix_7.jpeg", "24hr-California-Sf-2023Mix_8.jpeg", "24hr-California-Sf-2023Mix_9.jpeg", "24hr-California-Sf-2023Mix_10.jpeg", "24hr-California-Sf-2023Mix_11.jpeg", "24hr-California-Sf-2023Mix_12.jpeg", "24hr-California-Sf-2023Mix_13.jpeg", "24hr-California-Sf-2023Mix_14.jpeg", "24hr-California-Sf-2023Mix_15.jpeg", "24hr-California-Sf-2023Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-California-Ventura-2", "name": "California Ventura 2", "images": ["24hr-California-Ventura-2_1.jpeg", "24hr-California-Ventura-2_2.jpeg", "24hr-California-Ventura-2_3.jpeg", "24hr-California-Ventura-2_4.jpeg", "24hr-California-Ventura-2_5.jpeg", "24hr-California-Ventura-2_6.jpeg", "24hr-California-Ventura-2_7.jpeg", "24hr-California-Ventura-2_8.jpeg", "24hr-California-Ventura-2_9.jpeg", "24hr-California-Ventura-2_10.jpeg", "24hr-California-Ventura-2_11.jpeg", "24hr-California-Ventura-2_12.jpeg", "24hr-California-Ventura-2_13.jpeg", "24hr-California-Ventura-2_14.jpeg", "24hr-California-Ventura-2_15.jpeg", "24hr-California-Ventura-2_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Canyonlands-1", "name": "Canyonlands #1", "images": ["24hr-Canyonlands-1_1.jpeg", "24hr-Canyonlands-1_2.jpeg", "24hr-Canyonlands-1_3.jpeg", "24hr-Canyonlands-1_4.jpeg", "24hr-Canyonlands-1_5.jpeg", "24hr-Canyonlands-1_6.jpeg", "24hr-Canyonlands-1_7.jpeg", "24hr-Canyonlands-1_8.jpeg", "24hr-Canyonlands-1_9.jpeg", "24hr-Canyonlands-1_10.jpeg", "24hr-Canyonlands-1_11.jpeg", "24hr-Canyonlands-1_12.jpeg", "24hr-Canyonlands-1_13.jpeg", "24hr-Canyonlands-1_14.jpeg", "24hr-Canyonlands-1_15.jpeg", "24hr-Canyonlands-1_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Canyonlands-2", "name": "Canyonlands #2", "images": ["24hr-Canyonlands-2_1.jpeg", "24hr-Canyonlands-2_2.jpeg", "24hr-Canyonlands-2_3.jpeg", "24hr-Canyonlands-2_4.jpeg", "24hr-Canyonlands-2_5.jpeg", "24hr-Canyonlands-2_6.jpeg", "24hr-Canyonlands-2_7.jpeg", "24hr-Canyonlands-2_8.jpeg", "24hr-Canyonlands-2_9.jpeg", "24hr-Canyonlands-2_10.jpeg", "24hr-Canyonlands-2_11.jpeg", "24hr-Canyonlands-2_12.jpeg", "24hr-Canyonlands-2_13.jpeg", "24hr-Canyonlands-2_14.jpeg", "24hr-Canyonlands-2_15.jpeg", "24hr-Canyonlands-2_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Cape-Cod-2025", "name": "Cape Cod 2025", "images": ["24hr-Cape-Cod-2025_1.jpeg", "24hr-Cape-Cod-2025_2.jpeg", "24hr-Cape-Cod-2025_3.jpeg", "24hr-Cape-Cod-2025_4.jpeg", "24hr-Cape-Cod-2025_5.jpeg", "24hr-Cape-Cod-2025_6.jpeg", "24hr-Cape-Cod-2025_7.jpeg", "24hr-Cape-Cod-2025_8.jpeg", "24hr-Cape-Cod-2025_9.jpeg", "24hr-Cape-Cod-2025_10.jpeg", "24hr-Cape-Cod-2025_11.jpeg", "24hr-Cape-Cod-2025_12.jpeg", "24hr-Cape-Cod-2025_13.jpeg", "24hr-Cape-Cod-2025_14.jpeg", "24hr-Cape-Cod-2025_15.jpeg", "24hr-Cape-Cod-2025_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Cape-Lookout-Mix", "name": "Cape Lookout Mix", "images": ["24hr-Cape-Lookout-Mix_1.jpeg", "24hr-Cape-Lookout-Mix_2.jpeg", "24hr-Cape-Lookout-Mix_3.jpeg", "24hr-Cape-Lookout-Mix_4.jpeg", "24hr-Cape-Lookout-Mix_5.jpeg", "24hr-Cape-Lookout-Mix_6.jpeg", "24hr-Cape-Lookout-Mix_7.jpeg", "24hr-Cape-Lookout-Mix_8.jpeg", "24hr-Cape-Lookout-Mix_9.jpeg", "24hr-Cape-Lookout-Mix_10.jpeg", "24hr-Cape-Lookout-Mix_11.jpeg", "24hr-Cape-Lookout-Mix_12.jpeg", "24hr-Cape-Lookout-Mix_13.jpeg", "24hr-Cape-Lookout-Mix_14.jpeg", "24hr-Cape-Lookout-Mix_15.jpeg", "24hr-Cape-Lookout-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Catalina-Mix", "name": "Catalina Mix", "images": ["24hr-Catalina-Mix_1.jpeg", "24hr-Catalina-Mix_2.jpeg", "24hr-Catalina-Mix_3.jpeg", "24hr-Catalina-Mix_4.jpeg", "24hr-Catalina-Mix_5.jpeg", "24hr-Catalina-Mix_6.jpeg", "24hr-Catalina-Mix_7.jpeg", "24hr-Catalina-Mix_8.jpeg", "24hr-Catalina-Mix_9.jpeg", "24hr-Catalina-Mix_10.jpeg", "24hr-Catalina-Mix_11.jpeg", "24hr-Catalina-Mix_12.jpeg", "24hr-Catalina-Mix_13.jpeg", "24hr-Catalina-Mix_14.jpeg", "24hr-Catalina-Mix_15.jpeg", "24hr-Catalina-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-CatalinaAvalonLeft", "name": "Catalina Avalon (Left)", "images": ["24hr-CatalinaAvalonLeft_1.jpeg", "24hr-CatalinaAvalonLeft_2.jpeg", "24hr-CatalinaAvalonLeft_3.jpeg", "24hr-CatalinaAvalonLeft_4.jpeg", "24hr-CatalinaAvalonLeft_5.jpeg", "24hr-CatalinaAvalonLeft_6.jpeg", "24hr-CatalinaAvalonLeft_7.jpeg", "24hr-CatalinaAvalonLeft_8.jpeg", "24hr-CatalinaAvalonLeft_9.jpeg", "24hr-CatalinaAvalonLeft_10.jpeg", "24hr-CatalinaAvalonLeft_11.jpeg", "24hr-CatalinaAvalonLeft_12.jpeg", "24hr-CatalinaAvalonLeft_13.jpeg", "24hr-CatalinaAvalonLeft_14.jpeg", "24hr-CatalinaAvalonLeft_15.jpeg", "24hr-CatalinaAvalonLeft_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-CatalinaAvalonRight", "name": "Catalina Avalon (Right)", "images": ["24hr-CatalinaAvalonRight_1.jpeg", "24hr-CatalinaAvalonRight_2.jpeg", "24hr-CatalinaAvalonRight_3.jpeg", "24hr-CatalinaAvalonRight_4.jpeg", "24hr-CatalinaAvalonRight_5.jpeg", "24hr-CatalinaAvalonRight_6.jpeg", "24hr-CatalinaAvalonRight_7.jpeg", "24hr-CatalinaAvalonRight_8.jpeg", "24hr-CatalinaAvalonRight_9.jpeg", "24hr-CatalinaAvalonRight_10.jpeg", "24hr-CatalinaAvalonRight_11.jpeg", "24hr-CatalinaAvalonRight_12.jpeg", "24hr-CatalinaAvalonRight_13.jpeg", "24hr-CatalinaAvalonRight_14.jpeg", "24hr-CatalinaAvalonRight_15.jpeg", "24hr-CatalinaAvalonRight_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-CatalinaIsthmusCove", "name": "Catalina Isthmus Cove", "images": ["24hr-CatalinaIsthmusCove_1.jpeg", "24hr-CatalinaIsthmusCove_2.jpeg", "24hr-CatalinaIsthmusCove_3.jpeg", "24hr-CatalinaIsthmusCove_4.jpeg", "24hr-CatalinaIsthmusCove_5.jpeg", "24hr-CatalinaIsthmusCove_6.jpeg", "24hr-CatalinaIsthmusCove_7.jpeg", "24hr-CatalinaIsthmusCove_8.jpeg", "24hr-CatalinaIsthmusCove_9.jpeg", "24hr-CatalinaIsthmusCove_10.jpeg", "24hr-CatalinaIsthmusCove_11.jpeg", "24hr-CatalinaIsthmusCove_12.jpeg", "24hr-CatalinaIsthmusCove_13.jpeg", "24hr-CatalinaIsthmusCove_14.jpeg", "24hr-CatalinaIsthmusCove_15.jpeg", "24hr-CatalinaIsthmusCove_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-CatalinaLittleHarbor", "name": "Catalina Little Harbor", "images": ["24hr-CatalinaLittleHarbor_1.jpeg", "24hr-CatalinaLittleHarbor_2.jpeg", "24hr-CatalinaLittleHarbor_3.jpeg", "24hr-CatalinaLittleHarbor_4.jpeg", "24hr-CatalinaLittleHarbor_5.jpeg", "24hr-CatalinaLittleHarbor_6.jpeg", "24hr-CatalinaLittleHarbor_7.jpeg", "24hr-CatalinaLittleHarbor_8.jpeg", "24hr-CatalinaLittleHarbor_9.jpeg", "24hr-CatalinaLittleHarbor_10.jpeg", "24hr-CatalinaLittleHarbor_11.jpeg", "24hr-CatalinaLittleHarbor_12.jpeg", "24hr-CatalinaLittleHarbor_13.jpeg", "24hr-CatalinaLittleHarbor_14.jpeg", "24hr-CatalinaLittleHarbor_15.jpeg", "24hr-CatalinaLittleHarbor_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-CatalinaWhalesTail", "name": "Catalina Whale's Tail", "images": ["24hr-CatalinaWhalesTail_1.jpeg", "24hr-CatalinaWhalesTail_2.jpeg", "24hr-CatalinaWhalesTail_3.jpeg", "24hr-CatalinaWhalesTail_4.jpeg", "24hr-CatalinaWhalesTail_5.jpeg", "24hr-CatalinaWhalesTail_6.jpeg", "24hr-CatalinaWhalesTail_7.jpeg", "24hr-CatalinaWhalesTail_8.jpeg", "24hr-CatalinaWhalesTail_9.jpeg", "24hr-CatalinaWhalesTail_10.jpeg", "24hr-CatalinaWhalesTail_11.jpeg", "24hr-CatalinaWhalesTail_12.jpeg", "24hr-CatalinaWhalesTail_13.jpeg", "24hr-CatalinaWhalesTail_14.jpeg", "24hr-CatalinaWhalesTail_15.jpeg", "24hr-CatalinaWhalesTail_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Changping-2026", "name": "Changping 2026", "images": ["24hr-Changping-2026_1.jpeg", "24hr-Changping-2026_2.jpeg", "24hr-Changping-2026_3.jpeg", "24hr-Changping-2026_4.jpeg", "24hr-Changping-2026_5.jpeg", "24hr-Changping-2026_6.jpeg", "24hr-Changping-2026_7.jpeg", "24hr-Changping-2026_8.jpeg", "24hr-Changping-2026_9.jpeg", "24hr-Changping-2026_10.jpeg", "24hr-Changping-2026_11.jpeg", "24hr-Changping-2026_12.jpeg", "24hr-Changping-2026_13.jpeg", "24hr-Changping-2026_14.jpeg", "24hr-Changping-2026_15.jpeg", "24hr-Changping-2026_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Chicago-1", "name": "Chicago #1", "images": ["24hr-Chicago-1_1.jpeg", "24hr-Chicago-1_2.jpeg", "24hr-Chicago-1_3.jpeg", "24hr-Chicago-1_4.jpeg", "24hr-Chicago-1_5.jpeg", "24hr-Chicago-1_6.jpeg", "24hr-Chicago-1_7.jpeg", "24hr-Chicago-1_8.jpeg", "24hr-Chicago-1_9.jpeg", "24hr-Chicago-1_10.jpeg", "24hr-Chicago-1_11.jpeg", "24hr-Chicago-1_12.jpeg", "24hr-Chicago-1_13.jpeg", "24hr-Chicago-1_14.jpeg", "24hr-Chicago-1_15.jpeg", "24hr-Chicago-1_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Chicago-2", "name": "Chicago #2", "images": ["24hr-Chicago-2_1.jpeg", "24hr-Chicago-2_2.jpeg", "24hr-Chicago-2_3.jpeg", "24hr-Chicago-2_4.jpeg", "24hr-Chicago-2_5.jpeg", "24hr-Chicago-2_6.jpeg", "24hr-Chicago-2_7.jpeg", "24hr-Chicago-2_8.jpeg", "24hr-Chicago-2_9.jpeg", "24hr-Chicago-2_10.jpeg", "24hr-Chicago-2_11.jpeg", "24hr-Chicago-2_12.jpeg", "24hr-Chicago-2_13.jpeg", "24hr-Chicago-2_14.jpeg", "24hr-Chicago-2_15.jpeg", "24hr-Chicago-2_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Chicago-2026-Mix", "name": "Chicago 2026 Mix", "images": ["24hr-Chicago-2026-Mix_1.jpeg", "24hr-Chicago-2026-Mix_2.jpeg", "24hr-Chicago-2026-Mix_3.jpeg", "24hr-Chicago-2026-Mix_4.jpeg", "24hr-Chicago-2026-Mix_5.jpeg", "24hr-Chicago-2026-Mix_6.jpeg", "24hr-Chicago-2026-Mix_7.jpeg", "24hr-Chicago-2026-Mix_8.jpeg", "24hr-Chicago-2026-Mix_9.jpeg", "24hr-Chicago-2026-Mix_10.jpeg", "24hr-Chicago-2026-Mix_11.jpeg", "24hr-Chicago-2026-Mix_12.jpeg", "24hr-Chicago-2026-Mix_13.jpeg", "24hr-Chicago-2026-Mix_14.jpeg", "24hr-Chicago-2026-Mix_15.jpeg", "24hr-Chicago-2026-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Coit-Tower-2026", "name": "Coit Tower 2026", "images": ["24hr-Coit-Tower-2026_1.jpeg", "24hr-Coit-Tower-2026_2.jpeg", "24hr-Coit-Tower-2026_3.jpeg", "24hr-Coit-Tower-2026_4.jpeg", "24hr-Coit-Tower-2026_5.jpeg", "24hr-Coit-Tower-2026_6.jpeg", "24hr-Coit-Tower-2026_7.jpeg", "24hr-Coit-Tower-2026_8.jpeg", "24hr-Coit-Tower-2026_9.jpeg", "24hr-Coit-Tower-2026_10.jpeg", "24hr-Coit-Tower-2026_11.jpeg", "24hr-Coit-Tower-2026_12.jpeg", "24hr-Coit-Tower-2026_13.jpeg", "24hr-Coit-Tower-2026_14.jpeg", "24hr-Coit-Tower-2026_15.jpeg", "24hr-Coit-Tower-2026_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Colorado-Denver", "name": "Colorado Denver", "images": ["24hr-Colorado-Denver_1.jpeg", "24hr-Colorado-Denver_2.jpeg", "24hr-Colorado-Denver_3.jpeg", "24hr-Colorado-Denver_4.jpeg", "24hr-Colorado-Denver_5.jpeg", "24hr-Colorado-Denver_6.jpeg", "24hr-Colorado-Denver_7.jpeg", "24hr-Colorado-Denver_8.jpeg", "24hr-Colorado-Denver_9.jpeg", "24hr-Colorado-Denver_10.jpeg", "24hr-Colorado-Denver_11.jpeg", "24hr-Colorado-Denver_12.jpeg", "24hr-Colorado-Denver_13.jpeg", "24hr-Colorado-Denver_14.jpeg", "24hr-Colorado-Denver_15.jpeg", "24hr-Colorado-Denver_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Colorado-Mix", "name": "Colorado Mix", "images": ["24hr-Colorado-Mix_1.jpeg", "24hr-Colorado-Mix_2.jpeg", "24hr-Colorado-Mix_3.jpeg", "24hr-Colorado-Mix_4.jpeg", "24hr-Colorado-Mix_5.jpeg", "24hr-Colorado-Mix_6.jpeg", "24hr-Colorado-Mix_7.jpeg", "24hr-Colorado-Mix_8.jpeg", "24hr-Colorado-Mix_9.jpeg", "24hr-Colorado-Mix_10.jpeg", "24hr-Colorado-Mix_11.jpeg", "24hr-Colorado-Mix_12.jpeg", "24hr-Colorado-Mix_13.jpeg", "24hr-Colorado-Mix_14.jpeg", "24hr-Colorado-Mix_15.jpeg", "24hr-Colorado-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Cotswolds", "name": "Cotswolds", "images": ["24hr-Cotswolds_1.jpeg", "24hr-Cotswolds_2.jpeg", "24hr-Cotswolds_3.jpeg", "24hr-Cotswolds_4.jpeg", "24hr-Cotswolds_5.jpeg", "24hr-Cotswolds_6.jpeg", "24hr-Cotswolds_7.jpeg", "24hr-Cotswolds_8.jpeg", "24hr-Cotswolds_9.jpeg", "24hr-Cotswolds_10.jpeg", "24hr-Cotswolds_11.jpeg", "24hr-Cotswolds_12.jpeg", "24hr-Cotswolds_13.jpeg", "24hr-Cotswolds_14.jpeg", "24hr-Cotswolds_15.jpeg", "24hr-Cotswolds_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Crater-Lake-2026", "name": "Crater Lake 2026", "images": ["24hr-Crater-Lake-2026_1.jpeg", "24hr-Crater-Lake-2026_2.jpeg", "24hr-Crater-Lake-2026_3.jpeg", "24hr-Crater-Lake-2026_4.jpeg", "24hr-Crater-Lake-2026_5.jpeg", "24hr-Crater-Lake-2026_6.jpeg", "24hr-Crater-Lake-2026_7.jpeg", "24hr-Crater-Lake-2026_8.jpeg", "24hr-Crater-Lake-2026_9.jpeg", "24hr-Crater-Lake-2026_10.jpeg", "24hr-Crater-Lake-2026_11.jpeg", "24hr-Crater-Lake-2026_12.jpeg", "24hr-Crater-Lake-2026_13.jpeg", "24hr-Crater-Lake-2026_14.jpeg", "24hr-Crater-Lake-2026_15.jpeg", "24hr-Crater-Lake-2026_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Earth", "name": "Earth from ISS", "images": ["24hr-Earth_1.jpeg", "24hr-Earth_2.jpeg", "24hr-Earth_3.jpeg", "24hr-Earth_4.jpeg", "24hr-Earth_5.jpeg", "24hr-Earth_6.jpeg", "24hr-Earth_7.jpeg", "24hr-Earth_8.jpeg", "24hr-Earth_9.jpeg", "24hr-Earth_10.jpeg", "24hr-Earth_11.jpeg", "24hr-Earth_12.jpeg", "24hr-Earth_13.jpeg", "24hr-Earth_14.jpeg", "24hr-Earth_15.jpeg", "24hr-Earth_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Elephant-Island-2026", "name": "Elephant Island 2026", "images": ["24hr-Elephant-Island-2026_1.jpeg", "24hr-Elephant-Island-2026_2.jpeg", "24hr-Elephant-Island-2026_3.jpeg", "24hr-Elephant-Island-2026_4.jpeg", "24hr-Elephant-Island-2026_5.jpeg", "24hr-Elephant-Island-2026_6.jpeg", "24hr-Elephant-Island-2026_7.jpeg", "24hr-Elephant-Island-2026_8.jpeg", "24hr-Elephant-Island-2026_9.jpeg", "24hr-Elephant-Island-2026_10.jpeg", "24hr-Elephant-Island-2026_11.jpeg", "24hr-Elephant-Island-2026_12.jpeg", "24hr-Elephant-Island-2026_13.jpeg", "24hr-Elephant-Island-2026_14.jpeg", "24hr-Elephant-Island-2026_15.jpeg", "24hr-Elephant-Island-2026_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Fjordland-2026", "name": "Fjordland 2026", "images": ["24hr-Fjordland-2026_1.jpeg", "24hr-Fjordland-2026_2.jpeg", "24hr-Fjordland-2026_3.jpeg", "24hr-Fjordland-2026_4.jpeg", "24hr-Fjordland-2026_5.jpeg", "24hr-Fjordland-2026_6.jpeg", "24hr-Fjordland-2026_7.jpeg", "24hr-Fjordland-2026_8.jpeg", "24hr-Fjordland-2026_9.jpeg", "24hr-Fjordland-2026_10.jpeg", "24hr-Fjordland-2026_11.jpeg", "24hr-Fjordland-2026_12.jpeg", "24hr-Fjordland-2026_13.jpeg", "24hr-Fjordland-2026_14.jpeg", "24hr-Fjordland-2026_15.jpeg", "24hr-Fjordland-2026_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Florida-Miami-Beach-1", "name": "Florida Miami Beach 1", "images": ["24hr-Florida-Miami-Beach-1_1.jpeg", "24hr-Florida-Miami-Beach-1_2.jpeg", "24hr-Florida-Miami-Beach-1_3.jpeg", "24hr-Florida-Miami-Beach-1_4.jpeg", "24hr-Florida-Miami-Beach-1_5.jpeg", "24hr-Florida-Miami-Beach-1_6.jpeg", "24hr-Florida-Miami-Beach-1_7.jpeg", "24hr-Florida-Miami-Beach-1_8.jpeg", "24hr-Florida-Miami-Beach-1_9.jpeg", "24hr-Florida-Miami-Beach-1_10.jpeg", "24hr-Florida-Miami-Beach-1_11.jpeg", "24hr-Florida-Miami-Beach-1_12.jpeg", "24hr-Florida-Miami-Beach-1_13.jpeg", "24hr-Florida-Miami-Beach-1_14.jpeg", "24hr-Florida-Miami-Beach-1_15.jpeg", "24hr-Florida-Miami-Beach-1_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Florida-Miami-Beach-2", "name": "Florida Miami Beach 2", "images": ["24hr-Florida-Miami-Beach-2_1.jpeg", "24hr-Florida-Miami-Beach-2_2.jpeg", "24hr-Florida-Miami-Beach-2_3.jpeg", "24hr-Florida-Miami-Beach-2_4.jpeg", "24hr-Florida-Miami-Beach-2_5.jpeg", "24hr-Florida-Miami-Beach-2_6.jpeg", "24hr-Florida-Miami-Beach-2_7.jpeg", "24hr-Florida-Miami-Beach-2_8.jpeg", "24hr-Florida-Miami-Beach-2_9.jpeg", "24hr-Florida-Miami-Beach-2_10.jpeg", "24hr-Florida-Miami-Beach-2_11.jpeg", "24hr-Florida-Miami-Beach-2_12.jpeg", "24hr-Florida-Miami-Beach-2_13.jpeg", "24hr-Florida-Miami-Beach-2_14.jpeg", "24hr-Florida-Miami-Beach-2_15.jpeg", "24hr-Florida-Miami-Beach-2_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-France-Paris-Villette", "name": "France Paris Villette", "images": ["24hr-France-Paris-Villette_1.jpeg", "24hr-France-Paris-Villette_2.jpeg", "24hr-France-Paris-Villette_3.jpeg", "24hr-France-Paris-Villette_4.jpeg", "24hr-France-Paris-Villette_5.jpeg", "24hr-France-Paris-Villette_6.jpeg", "24hr-France-Paris-Villette_7.jpeg", "24hr-France-Paris-Villette_8.jpeg", "24hr-France-Paris-Villette_9.jpeg", "24hr-France-Paris-Villette_10.jpeg", "24hr-France-Paris-Villette_11.jpeg", "24hr-France-Paris-Villette_12.jpeg", "24hr-France-Paris-Villette_13.jpeg", "24hr-France-Paris-Villette_14.jpeg", "24hr-France-Paris-Villette_15.jpeg", "24hr-France-Paris-Villette_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Glacier", "name": "Glacier National Park", "images": ["24hr-Glacier_1.jpeg", "24hr-Glacier_2.jpeg", "24hr-Glacier_3.jpeg", "24hr-Glacier_4.jpeg", "24hr-Glacier_5.jpeg", "24hr-Glacier_6.jpeg", "24hr-Glacier_7.jpeg", "24hr-Glacier_8.jpeg", "24hr-Glacier_9.jpeg", "24hr-Glacier_10.jpeg", "24hr-Glacier_11.jpeg", "24hr-Glacier_12.jpeg", "24hr-Glacier_13.jpeg", "24hr-Glacier_14.jpeg", "24hr-Glacier_15.jpeg", "24hr-Glacier_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Golden-Gate-Bridge-South-2026", "name": "Golden Gate Bridge South 2026", "images": ["24hr-Golden-Gate-Bridge-South-2026_1.jpeg", "24hr-Golden-Gate-Bridge-South-2026_2.jpeg", "24hr-Golden-Gate-Bridge-South-2026_3.jpeg", "24hr-Golden-Gate-Bridge-South-2026_4.jpeg", "24hr-Golden-Gate-Bridge-South-2026_5.jpeg", "24hr-Golden-Gate-Bridge-South-2026_6.jpeg", "24hr-Golden-Gate-Bridge-South-2026_7.jpeg", "24hr-Golden-Gate-Bridge-South-2026_8.jpeg", "24hr-Golden-Gate-Bridge-South-2026_9.jpeg", "24hr-Golden-Gate-Bridge-South-2026_10.jpeg", "24hr-Golden-Gate-Bridge-South-2026_11.jpeg", "24hr-Golden-Gate-Bridge-South-2026_12.jpeg", "24hr-Golden-Gate-Bridge-South-2026_13.jpeg", "24hr-Golden-Gate-Bridge-South-2026_14.jpeg", "24hr-Golden-Gate-Bridge-South-2026_15.jpeg", "24hr-Golden-Gate-Bridge-South-2026_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Grand-Canyon-1", "name": "Grand Canyon 1", "images": ["24hr-Grand-Canyon-1_1.jpeg", "24hr-Grand-Canyon-1_2.jpeg", "24hr-Grand-Canyon-1_3.jpeg", "24hr-Grand-Canyon-1_4.jpeg", "24hr-Grand-Canyon-1_5.jpeg", "24hr-Grand-Canyon-1_6.jpeg", "24hr-Grand-Canyon-1_7.jpeg", "24hr-Grand-Canyon-1_8.jpeg", "24hr-Grand-Canyon-1_9.jpeg", "24hr-Grand-Canyon-1_10.jpeg", "24hr-Grand-Canyon-1_11.jpeg", "24hr-Grand-Canyon-1_12.jpeg", "24hr-Grand-Canyon-1_13.jpeg", "24hr-Grand-Canyon-1_14.jpeg", "24hr-Grand-Canyon-1_15.jpeg", "24hr-Grand-Canyon-1_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Grand-Prismatic-Spring-2026", "name": "Grand Prismatic Spring 2026", "images": ["24hr-Grand-Prismatic-Spring-2026_1.jpeg", "24hr-Grand-Prismatic-Spring-2026_2.jpeg", "24hr-Grand-Prismatic-Spring-2026_3.jpeg", "24hr-Grand-Prismatic-Spring-2026_4.jpeg", "24hr-Grand-Prismatic-Spring-2026_5.jpeg", "24hr-Grand-Prismatic-Spring-2026_6.jpeg", "24hr-Grand-Prismatic-Spring-2026_7.jpeg", "24hr-Grand-Prismatic-Spring-2026_8.jpeg", "24hr-Grand-Prismatic-Spring-2026_9.jpeg", "24hr-Grand-Prismatic-Spring-2026_10.jpeg", "24hr-Grand-Prismatic-Spring-2026_11.jpeg", "24hr-Grand-Prismatic-Spring-2026_12.jpeg", "24hr-Grand-Prismatic-Spring-2026_13.jpeg", "24hr-Grand-Prismatic-Spring-2026_14.jpeg", "24hr-Grand-Prismatic-Spring-2026_15.jpeg", "24hr-Grand-Prismatic-Spring-2026_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-GrandTetons", "name": "Grand Tetons", "images": ["24hr-GrandTetons_1.jpeg", "24hr-GrandTetons_2.jpeg", "24hr-GrandTetons_3.jpeg", "24hr-GrandTetons_4.jpeg", "24hr-GrandTetons_5.jpeg", "24hr-GrandTetons_6.jpeg", "24hr-GrandTetons_7.jpeg", "24hr-GrandTetons_8.jpeg", "24hr-GrandTetons_9.jpeg", "24hr-GrandTetons_10.jpeg", "24hr-GrandTetons_11.jpeg", "24hr-GrandTetons_12.jpeg", "24hr-GrandTetons_13.jpeg", "24hr-GrandTetons_14.jpeg", "24hr-GrandTetons_15.jpeg", "24hr-GrandTetons_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Hawaii-Honolulu", "name": "Hawaii Honolulu", "images": ["24hr-Hawaii-Honolulu_1.jpeg", "24hr-Hawaii-Honolulu_2.jpeg", "24hr-Hawaii-Honolulu_3.jpeg", "24hr-Hawaii-Honolulu_4.jpeg", "24hr-Hawaii-Honolulu_5.jpeg", "24hr-Hawaii-Honolulu_6.jpeg", "24hr-Hawaii-Honolulu_7.jpeg", "24hr-Hawaii-Honolulu_8.jpeg", "24hr-Hawaii-Honolulu_9.jpeg", "24hr-Hawaii-Honolulu_10.jpeg", "24hr-Hawaii-Honolulu_11.jpeg", "24hr-Hawaii-Honolulu_12.jpeg", "24hr-Hawaii-Honolulu_13.jpeg", "24hr-Hawaii-Honolulu_14.jpeg", "24hr-Hawaii-Honolulu_15.jpeg", "24hr-Hawaii-Honolulu_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-HighSierra", "name": "High Sierra", "images": ["24hr-HighSierra_1.jpeg", "24hr-HighSierra_2.jpeg", "24hr-HighSierra_3.jpeg", "24hr-HighSierra_4.jpeg", "24hr-HighSierra_5.jpeg", "24hr-HighSierra_6.jpeg", "24hr-HighSierra_7.jpeg", "24hr-HighSierra_8.jpeg", "24hr-HighSierra_9.jpeg", "24hr-HighSierra_10.jpeg", "24hr-HighSierra_11.jpeg", "24hr-HighSierra_12.jpeg", "24hr-HighSierra_13.jpeg", "24hr-HighSierra_14.jpeg", "24hr-HighSierra_15.jpeg", "24hr-HighSierra_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Highway1-1-Mix", "name": "Highway 1 Mix 1", "images": ["24hr-Highway1-1-Mix_1.jpeg", "24hr-Highway1-1-Mix_2.jpeg", "24hr-Highway1-1-Mix_3.jpeg", "24hr-Highway1-1-Mix_4.jpeg", "24hr-Highway1-1-Mix_5.jpeg", "24hr-Highway1-1-Mix_6.jpeg", "24hr-Highway1-1-Mix_7.jpeg", "24hr-Highway1-1-Mix_8.jpeg", "24hr-Highway1-1-Mix_9.jpeg", "24hr-Highway1-1-Mix_10.jpeg", "24hr-Highway1-1-Mix_11.jpeg", "24hr-Highway1-1-Mix_12.jpeg", "24hr-Highway1-1-Mix_13.jpeg", "24hr-Highway1-1-Mix_14.jpeg", "24hr-Highway1-1-Mix_15.jpeg", "24hr-Highway1-1-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Highway1-2-Mix", "name": "Highway 1 Mix 2", "images": ["24hr-Highway1-2-Mix_1.jpeg", "24hr-Highway1-2-Mix_2.jpeg", "24hr-Highway1-2-Mix_3.jpeg", "24hr-Highway1-2-Mix_4.jpeg", "24hr-Highway1-2-Mix_5.jpeg", "24hr-Highway1-2-Mix_6.jpeg", "24hr-Highway1-2-Mix_7.jpeg", "24hr-Highway1-2-Mix_8.jpeg", "24hr-Highway1-2-Mix_9.jpeg", "24hr-Highway1-2-Mix_10.jpeg", "24hr-Highway1-2-Mix_11.jpeg", "24hr-Highway1-2-Mix_12.jpeg", "24hr-Highway1-2-Mix_13.jpeg", "24hr-Highway1-2-Mix_14.jpeg", "24hr-Highway1-2-Mix_15.jpeg", "24hr-Highway1-2-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Iceland-2-Mix", "name": "Iceland Mix 2", "images": ["24hr-Iceland-2-Mix_1.jpeg", "24hr-Iceland-2-Mix_2.jpeg", "24hr-Iceland-2-Mix_3.jpeg", "24hr-Iceland-2-Mix_4.jpeg", "24hr-Iceland-2-Mix_5.jpeg", "24hr-Iceland-2-Mix_6.jpeg", "24hr-Iceland-2-Mix_7.jpeg", "24hr-Iceland-2-Mix_8.jpeg", "24hr-Iceland-2-Mix_9.jpeg", "24hr-Iceland-2-Mix_10.jpeg", "24hr-Iceland-2-Mix_11.jpeg", "24hr-Iceland-2-Mix_12.jpeg", "24hr-Iceland-2-Mix_13.jpeg", "24hr-Iceland-2-Mix_14.jpeg", "24hr-Iceland-2-Mix_15.jpeg", "24hr-Iceland-2-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Iceland-Mix", "name": "Iceland Mix", "images": ["24hr-Iceland-Mix_1.jpeg", "24hr-Iceland-Mix_2.jpeg", "24hr-Iceland-Mix_3.jpeg", "24hr-Iceland-Mix_4.jpeg", "24hr-Iceland-Mix_5.jpeg", "24hr-Iceland-Mix_6.jpeg", "24hr-Iceland-Mix_7.jpeg", "24hr-Iceland-Mix_8.jpeg", "24hr-Iceland-Mix_9.jpeg", "24hr-Iceland-Mix_10.jpeg", "24hr-Iceland-Mix_11.jpeg", "24hr-Iceland-Mix_12.jpeg", "24hr-Iceland-Mix_13.jpeg", "24hr-Iceland-Mix_14.jpeg", "24hr-Iceland-Mix_15.jpeg", "24hr-Iceland-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Idaho-Coeur-Dalene", "name": "Idaho Coeur Dalene", "images": ["24hr-Idaho-Coeur-Dalene_1.jpeg", "24hr-Idaho-Coeur-Dalene_2.jpeg", "24hr-Idaho-Coeur-Dalene_3.jpeg", "24hr-Idaho-Coeur-Dalene_4.jpeg", "24hr-Idaho-Coeur-Dalene_5.jpeg", "24hr-Idaho-Coeur-Dalene_6.jpeg", "24hr-Idaho-Coeur-Dalene_7.jpeg", "24hr-Idaho-Coeur-Dalene_8.jpeg", "24hr-Idaho-Coeur-Dalene_9.jpeg", "24hr-Idaho-Coeur-Dalene_10.jpeg", "24hr-Idaho-Coeur-Dalene_11.jpeg", "24hr-Idaho-Coeur-Dalene_12.jpeg", "24hr-Idaho-Coeur-Dalene_13.jpeg", "24hr-Idaho-Coeur-Dalene_14.jpeg", "24hr-Idaho-Coeur-Dalene_15.jpeg", "24hr-Idaho-Coeur-Dalene_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Iss-3-Mix", "name": "Iss Mix 3", "images": ["24hr-Iss-3-Mix_1.jpeg", "24hr-Iss-3-Mix_2.jpeg", "24hr-Iss-3-Mix_3.jpeg", "24hr-Iss-3-Mix_4.jpeg", "24hr-Iss-3-Mix_5.jpeg", "24hr-Iss-3-Mix_6.jpeg", "24hr-Iss-3-Mix_7.jpeg", "24hr-Iss-3-Mix_8.jpeg", "24hr-Iss-3-Mix_9.jpeg", "24hr-Iss-3-Mix_10.jpeg", "24hr-Iss-3-Mix_11.jpeg", "24hr-Iss-3-Mix_12.jpeg", "24hr-Iss-3-Mix_13.jpeg", "24hr-Iss-3-Mix_14.jpeg", "24hr-Iss-3-Mix_15.jpeg", "24hr-Iss-3-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Japan-Tokyo-Shinjuku-East", "name": "Japan Tokyo Shinjuku East", "images": ["24hr-Japan-Tokyo-Shinjuku-East_1.jpeg", "24hr-Japan-Tokyo-Shinjuku-East_2.jpeg", "24hr-Japan-Tokyo-Shinjuku-East_3.jpeg", "24hr-Japan-Tokyo-Shinjuku-East_4.jpeg", "24hr-Japan-Tokyo-Shinjuku-East_5.jpeg", "24hr-Japan-Tokyo-Shinjuku-East_6.jpeg", "24hr-Japan-Tokyo-Shinjuku-East_7.jpeg", "24hr-Japan-Tokyo-Shinjuku-East_8.jpeg", "24hr-Japan-Tokyo-Shinjuku-East_9.jpeg", "24hr-Japan-Tokyo-Shinjuku-East_10.jpeg", "24hr-Japan-Tokyo-Shinjuku-East_11.jpeg", "24hr-Japan-Tokyo-Shinjuku-East_12.jpeg", "24hr-Japan-Tokyo-Shinjuku-East_13.jpeg", "24hr-Japan-Tokyo-Shinjuku-East_14.jpeg", "24hr-Japan-Tokyo-Shinjuku-East_15.jpeg", "24hr-Japan-Tokyo-Shinjuku-East_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Japan-Tokyo-Shinjuku-Southeast", "name": "Japan Tokyo Shinjuku Southeast", "images": ["24hr-Japan-Tokyo-Shinjuku-Southeast_1.jpeg", "24hr-Japan-Tokyo-Shinjuku-Southeast_2.jpeg", "24hr-Japan-Tokyo-Shinjuku-Southeast_3.jpeg", "24hr-Japan-Tokyo-Shinjuku-Southeast_4.jpeg", "24hr-Japan-Tokyo-Shinjuku-Southeast_5.jpeg", "24hr-Japan-Tokyo-Shinjuku-Southeast_6.jpeg", "24hr-Japan-Tokyo-Shinjuku-Southeast_7.jpeg", "24hr-Japan-Tokyo-Shinjuku-Southeast_8.jpeg", "24hr-Japan-Tokyo-Shinjuku-Southeast_9.jpeg", "24hr-Japan-Tokyo-Shinjuku-Southeast_10.jpeg", "24hr-Japan-Tokyo-Shinjuku-Southeast_11.jpeg", "24hr-Japan-Tokyo-Shinjuku-Southeast_12.jpeg", "24hr-Japan-Tokyo-Shinjuku-Southeast_13.jpeg", "24hr-Japan-Tokyo-Shinjuku-Southeast_14.jpeg", "24hr-Japan-Tokyo-Shinjuku-Southeast_15.jpeg", "24hr-Japan-Tokyo-Shinjuku-Southeast_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Jinshanling-Great-Wall-2026", "name": "Jinshanling Great Wall 2026", "images": ["24hr-Jinshanling-Great-Wall-2026_1.jpeg", "24hr-Jinshanling-Great-Wall-2026_2.jpeg", "24hr-Jinshanling-Great-Wall-2026_3.jpeg", "24hr-Jinshanling-Great-Wall-2026_4.jpeg", "24hr-Jinshanling-Great-Wall-2026_5.jpeg", "24hr-Jinshanling-Great-Wall-2026_6.jpeg", "24hr-Jinshanling-Great-Wall-2026_7.jpeg", "24hr-Jinshanling-Great-Wall-2026_8.jpeg", "24hr-Jinshanling-Great-Wall-2026_9.jpeg", "24hr-Jinshanling-Great-Wall-2026_10.jpeg", "24hr-Jinshanling-Great-Wall-2026_11.jpeg", "24hr-Jinshanling-Great-Wall-2026_12.jpeg", "24hr-Jinshanling-Great-Wall-2026_13.jpeg", "24hr-Jinshanling-Great-Wall-2026_14.jpeg", "24hr-Jinshanling-Great-Wall-2026_15.jpeg", "24hr-Jinshanling-Great-Wall-2026_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Jordan-Valley", "name": "Jordan Valley", "images": ["24hr-Jordan-Valley_1.jpeg", "24hr-Jordan-Valley_2.jpeg", "24hr-Jordan-Valley_3.jpeg", "24hr-Jordan-Valley_4.jpeg", "24hr-Jordan-Valley_5.jpeg", "24hr-Jordan-Valley_6.jpeg", "24hr-Jordan-Valley_7.jpeg", "24hr-Jordan-Valley_8.jpeg", "24hr-Jordan-Valley_9.jpeg", "24hr-Jordan-Valley_10.jpeg", "24hr-Jordan-Valley_11.jpeg", "24hr-Jordan-Valley_12.jpeg", "24hr-Jordan-Valley_13.jpeg", "24hr-Jordan-Valley_14.jpeg", "24hr-Jordan-Valley_15.jpeg", "24hr-Jordan-Valley_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Joshua-1-Mix", "name": "Joshua 1 Mix", "images": ["24hr-Joshua-1-Mix_1.jpeg", "24hr-Joshua-1-Mix_2.jpeg", "24hr-Joshua-1-Mix_3.jpeg", "24hr-Joshua-1-Mix_4.jpeg", "24hr-Joshua-1-Mix_5.jpeg", "24hr-Joshua-1-Mix_6.jpeg", "24hr-Joshua-1-Mix_7.jpeg", "24hr-Joshua-1-Mix_8.jpeg", "24hr-Joshua-1-Mix_9.jpeg", "24hr-Joshua-1-Mix_10.jpeg", "24hr-Joshua-1-Mix_11.jpeg", "24hr-Joshua-1-Mix_12.jpeg", "24hr-Joshua-1-Mix_13.jpeg", "24hr-Joshua-1-Mix_14.jpeg", "24hr-Joshua-1-Mix_15.jpeg", "24hr-Joshua-1-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-JoshuaTree", "name": "Joshua Tree", "images": ["24hr-JoshuaTree_1.jpeg", "24hr-JoshuaTree_2.jpeg", "24hr-JoshuaTree_3.jpeg", "24hr-JoshuaTree_4.jpeg", "24hr-JoshuaTree_5.jpeg", "24hr-JoshuaTree_6.jpeg", "24hr-JoshuaTree_7.jpeg", "24hr-JoshuaTree_8.jpeg", "24hr-JoshuaTree_9.jpeg", "24hr-JoshuaTree_10.jpeg", "24hr-JoshuaTree_11.jpeg", "24hr-JoshuaTree_12.jpeg", "24hr-JoshuaTree_13.jpeg", "24hr-JoshuaTree_14.jpeg", "24hr-JoshuaTree_15.jpeg", "24hr-JoshuaTree_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Kenya-Safari-2026", "name": "Kenya Safari 2026", "images": ["24hr-Kenya-Safari-2026_1.jpeg", "24hr-Kenya-Safari-2026_2.jpeg", "24hr-Kenya-Safari-2026_3.jpeg", "24hr-Kenya-Safari-2026_4.jpeg", "24hr-Kenya-Safari-2026_5.jpeg", "24hr-Kenya-Safari-2026_6.jpeg", "24hr-Kenya-Safari-2026_7.jpeg", "24hr-Kenya-Safari-2026_8.jpeg", "24hr-Kenya-Safari-2026_9.jpeg", "24hr-Kenya-Safari-2026_10.jpeg", "24hr-Kenya-Safari-2026_11.jpeg", "24hr-Kenya-Safari-2026_12.jpeg", "24hr-Kenya-Safari-2026_13.jpeg", "24hr-Kenya-Safari-2026_14.jpeg", "24hr-Kenya-Safari-2026_15.jpeg", "24hr-Kenya-Safari-2026_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Las-Vegas-2026", "name": "Las Vegas 2026", "images": ["24hr-Las-Vegas-2026_1.jpeg", "24hr-Las-Vegas-2026_2.jpeg", "24hr-Las-Vegas-2026_3.jpeg", "24hr-Las-Vegas-2026_4.jpeg", "24hr-Las-Vegas-2026_5.jpeg", "24hr-Las-Vegas-2026_6.jpeg", "24hr-Las-Vegas-2026_7.jpeg", "24hr-Las-Vegas-2026_8.jpeg", "24hr-Las-Vegas-2026_9.jpeg", "24hr-Las-Vegas-2026_10.jpeg", "24hr-Las-Vegas-2026_11.jpeg", "24hr-Las-Vegas-2026_12.jpeg", "24hr-Las-Vegas-2026_13.jpeg", "24hr-Las-Vegas-2026_14.jpeg", "24hr-Las-Vegas-2026_15.jpeg", "24hr-Las-Vegas-2026_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-London-2025-1", "name": "London 2025-1", "images": ["24hr-London-2025-1_1.jpeg", "24hr-London-2025-1_2.jpeg", "24hr-London-2025-1_3.jpeg", "24hr-London-2025-1_4.jpeg", "24hr-London-2025-1_5.jpeg", "24hr-London-2025-1_6.jpeg", "24hr-London-2025-1_7.jpeg", "24hr-London-2025-1_8.jpeg", "24hr-London-2025-1_9.jpeg", "24hr-London-2025-1_10.jpeg", "24hr-London-2025-1_11.jpeg", "24hr-London-2025-1_12.jpeg", "24hr-London-2025-1_13.jpeg", "24hr-London-2025-1_14.jpeg", "24hr-London-2025-1_15.jpeg", "24hr-London-2025-1_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-London-Mix", "name": "London Mix", "images": ["24hr-London-Mix_1.jpeg", "24hr-London-Mix_2.jpeg", "24hr-London-Mix_3.jpeg", "24hr-London-Mix_4.jpeg", "24hr-London-Mix_5.jpeg", "24hr-London-Mix_6.jpeg", "24hr-London-Mix_7.jpeg", "24hr-London-Mix_8.jpeg", "24hr-London-Mix_9.jpeg", "24hr-London-Mix_10.jpeg", "24hr-London-Mix_11.jpeg", "24hr-London-Mix_12.jpeg", "24hr-London-Mix_13.jpeg", "24hr-London-Mix_14.jpeg", "24hr-London-Mix_15.jpeg", "24hr-London-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-London-The-City", "name": "London The City", "images": ["24hr-London-The-City_1.jpeg", "24hr-London-The-City_2.jpeg", "24hr-London-The-City_3.jpeg", "24hr-London-The-City_4.jpeg", "24hr-London-The-City_5.jpeg", "24hr-London-The-City_6.jpeg", "24hr-London-The-City_7.jpeg", "24hr-London-The-City_8.jpeg", "24hr-London-The-City_9.jpeg", "24hr-London-The-City_10.jpeg", "24hr-London-The-City_11.jpeg", "24hr-London-The-City_12.jpeg", "24hr-London-The-City_13.jpeg", "24hr-London-The-City_14.jpeg", "24hr-London-The-City_15.jpeg", "24hr-London-The-City_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-LosAngeles", "name": "Los Angeles", "images": ["24hr-LosAngeles_1.jpeg", "24hr-LosAngeles_2.jpeg", "24hr-LosAngeles_3.jpeg", "24hr-LosAngeles_4.jpeg", "24hr-LosAngeles_5.jpeg", "24hr-LosAngeles_6.jpeg", "24hr-LosAngeles_7.jpeg", "24hr-LosAngeles_8.jpeg", "24hr-LosAngeles_9.jpeg", "24hr-LosAngeles_10.jpeg", "24hr-LosAngeles_11.jpeg", "24hr-LosAngeles_12.jpeg", "24hr-LosAngeles_13.jpeg", "24hr-LosAngeles_14.jpeg", "24hr-LosAngeles_15.jpeg", "24hr-LosAngeles_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-LosAngeles2019", "name": "Los Angeles 2019", "images": ["24hr-LosAngeles2019_1.jpeg", "24hr-LosAngeles2019_2.jpeg", "24hr-LosAngeles2019_3.jpeg", "24hr-LosAngeles2019_4.jpeg", "24hr-LosAngeles2019_5.jpeg", "24hr-LosAngeles2019_6.jpeg", "24hr-LosAngeles2019_7.jpeg", "24hr-LosAngeles2019_8.jpeg", "24hr-LosAngeles2019_9.jpeg", "24hr-LosAngeles2019_10.jpeg", "24hr-LosAngeles2019_11.jpeg", "24hr-LosAngeles2019_12.jpeg", "24hr-LosAngeles2019_13.jpeg", "24hr-LosAngeles2019_14.jpeg", "24hr-LosAngeles2019_15.jpeg", "24hr-LosAngeles2019_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Madrid-1-Mix", "name": "Madrid 1 Mix", "images": ["24hr-Madrid-1-Mix_1.jpeg", "24hr-Madrid-1-Mix_2.jpeg", "24hr-Madrid-1-Mix_3.jpeg", "24hr-Madrid-1-Mix_4.jpeg", "24hr-Madrid-1-Mix_5.jpeg", "24hr-Madrid-1-Mix_6.jpeg", "24hr-Madrid-1-Mix_7.jpeg", "24hr-Madrid-1-Mix_8.jpeg", "24hr-Madrid-1-Mix_9.jpeg", "24hr-Madrid-1-Mix_10.jpeg", "24hr-Madrid-1-Mix_11.jpeg", "24hr-Madrid-1-Mix_12.jpeg", "24hr-Madrid-1-Mix_13.jpeg", "24hr-Madrid-1-Mix_14.jpeg", "24hr-Madrid-1-Mix_15.jpeg", "24hr-Madrid-1-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Madrid-Santo-Domingo", "name": "Madrid Santo Domingo", "images": ["24hr-Madrid-Santo-Domingo_1.jpeg", "24hr-Madrid-Santo-Domingo_2.jpeg", "24hr-Madrid-Santo-Domingo_3.jpeg", "24hr-Madrid-Santo-Domingo_4.jpeg", "24hr-Madrid-Santo-Domingo_5.jpeg", "24hr-Madrid-Santo-Domingo_6.jpeg", "24hr-Madrid-Santo-Domingo_7.jpeg", "24hr-Madrid-Santo-Domingo_8.jpeg", "24hr-Madrid-Santo-Domingo_9.jpeg", "24hr-Madrid-Santo-Domingo_10.jpeg", "24hr-Madrid-Santo-Domingo_11.jpeg", "24hr-Madrid-Santo-Domingo_12.jpeg", "24hr-Madrid-Santo-Domingo_13.jpeg", "24hr-Madrid-Santo-Domingo_14.jpeg", "24hr-Madrid-Santo-Domingo_15.jpeg", "24hr-Madrid-Santo-Domingo_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Malibu", "name": "Malibu", "images": ["24hr-Malibu_1.jpeg", "24hr-Malibu_2.jpeg", "24hr-Malibu_3.jpeg", "24hr-Malibu_4.jpeg", "24hr-Malibu_5.jpeg", "24hr-Malibu_6.jpeg", "24hr-Malibu_7.jpeg", "24hr-Malibu_8.jpeg", "24hr-Malibu_9.jpeg", "24hr-Malibu_10.jpeg", "24hr-Malibu_11.jpeg", "24hr-Malibu_12.jpeg", "24hr-Malibu_13.jpeg", "24hr-Malibu_14.jpeg", "24hr-Malibu_15.jpeg", "24hr-Malibu_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Merdeka-118-2026", "name": "Merdeka 118 2026", "images": ["24hr-Merdeka-118-2026_1.jpeg", "24hr-Merdeka-118-2026_2.jpeg", "24hr-Merdeka-118-2026_3.jpeg", "24hr-Merdeka-118-2026_4.jpeg", "24hr-Merdeka-118-2026_5.jpeg", "24hr-Merdeka-118-2026_6.jpeg", "24hr-Merdeka-118-2026_7.jpeg", "24hr-Merdeka-118-2026_8.jpeg", "24hr-Merdeka-118-2026_9.jpeg", "24hr-Merdeka-118-2026_10.jpeg", "24hr-Merdeka-118-2026_11.jpeg", "24hr-Merdeka-118-2026_12.jpeg", "24hr-Merdeka-118-2026_13.jpeg", "24hr-Merdeka-118-2026_14.jpeg", "24hr-Merdeka-118-2026_15.jpeg", "24hr-Merdeka-118-2026_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Miami-1", "name": "Miami #1", "images": ["24hr-Miami-1_1.jpeg", "24hr-Miami-1_2.jpeg", "24hr-Miami-1_3.jpeg", "24hr-Miami-1_4.jpeg", "24hr-Miami-1_5.jpeg", "24hr-Miami-1_6.jpeg", "24hr-Miami-1_7.jpeg", "24hr-Miami-1_8.jpeg", "24hr-Miami-1_9.jpeg", "24hr-Miami-1_10.jpeg", "24hr-Miami-1_11.jpeg", "24hr-Miami-1_12.jpeg", "24hr-Miami-1_13.jpeg", "24hr-Miami-1_14.jpeg", "24hr-Miami-1_15.jpeg", "24hr-Miami-1_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Miami-2", "name": "Miami #2", "images": ["24hr-Miami-2_1.jpeg", "24hr-Miami-2_2.jpeg", "24hr-Miami-2_3.jpeg", "24hr-Miami-2_4.jpeg", "24hr-Miami-2_5.jpeg", "24hr-Miami-2_6.jpeg", "24hr-Miami-2_7.jpeg", "24hr-Miami-2_8.jpeg", "24hr-Miami-2_9.jpeg", "24hr-Miami-2_10.jpeg", "24hr-Miami-2_11.jpeg", "24hr-Miami-2_12.jpeg", "24hr-Miami-2_13.jpeg", "24hr-Miami-2_14.jpeg", "24hr-Miami-2_15.jpeg", "24hr-Miami-2_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-MojaveDunes", "name": "Mojave Dunes", "images": ["24hr-MojaveDunes_1.jpeg", "24hr-MojaveDunes_2.jpeg", "24hr-MojaveDunes_3.jpeg", "24hr-MojaveDunes_4.jpeg", "24hr-MojaveDunes_5.jpeg", "24hr-MojaveDunes_6.jpeg", "24hr-MojaveDunes_7.jpeg", "24hr-MojaveDunes_8.jpeg", "24hr-MojaveDunes_9.jpeg", "24hr-MojaveDunes_10.jpeg", "24hr-MojaveDunes_11.jpeg", "24hr-MojaveDunes_12.jpeg", "24hr-MojaveDunes_13.jpeg", "24hr-MojaveDunes_14.jpeg", "24hr-MojaveDunes_15.jpeg", "24hr-MojaveDunes_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-MojaveMount", "name": "Mojave Mount", "images": ["24hr-MojaveMount_1.jpeg", "24hr-MojaveMount_2.jpeg", "24hr-MojaveMount_3.jpeg", "24hr-MojaveMount_4.jpeg", "24hr-MojaveMount_5.jpeg", "24hr-MojaveMount_6.jpeg", "24hr-MojaveMount_7.jpeg", "24hr-MojaveMount_8.jpeg", "24hr-MojaveMount_9.jpeg", "24hr-MojaveMount_10.jpeg", "24hr-MojaveMount_11.jpeg", "24hr-MojaveMount_12.jpeg", "24hr-MojaveMount_13.jpeg", "24hr-MojaveMount_14.jpeg", "24hr-MojaveMount_15.jpeg", "24hr-MojaveMount_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Mono-Lake-1", "name": "Mono Lake 1", "images": ["24hr-Mono-Lake-1_1.jpeg", "24hr-Mono-Lake-1_2.jpeg", "24hr-Mono-Lake-1_3.jpeg", "24hr-Mono-Lake-1_4.jpeg", "24hr-Mono-Lake-1_5.jpeg", "24hr-Mono-Lake-1_6.jpeg", "24hr-Mono-Lake-1_7.jpeg", "24hr-Mono-Lake-1_8.jpeg", "24hr-Mono-Lake-1_9.jpeg", "24hr-Mono-Lake-1_10.jpeg", "24hr-Mono-Lake-1_11.jpeg", "24hr-Mono-Lake-1_12.jpeg", "24hr-Mono-Lake-1_13.jpeg", "24hr-Mono-Lake-1_14.jpeg", "24hr-Mono-Lake-1_15.jpeg", "24hr-Mono-Lake-1_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Montauk-2025", "name": "Montauk 2025", "images": ["24hr-Montauk-2025_1.jpeg", "24hr-Montauk-2025_2.jpeg", "24hr-Montauk-2025_3.jpeg", "24hr-Montauk-2025_4.jpeg", "24hr-Montauk-2025_5.jpeg", "24hr-Montauk-2025_6.jpeg", "24hr-Montauk-2025_7.jpeg", "24hr-Montauk-2025_8.jpeg", "24hr-Montauk-2025_9.jpeg", "24hr-Montauk-2025_10.jpeg", "24hr-Montauk-2025_11.jpeg", "24hr-Montauk-2025_12.jpeg", "24hr-Montauk-2025_13.jpeg", "24hr-Montauk-2025_14.jpeg", "24hr-Montauk-2025_15.jpeg", "24hr-Montauk-2025_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Monterey-Bay-1", "name": "Monterey Bay #1", "images": ["24hr-Monterey-Bay-1_1.jpeg", "24hr-Monterey-Bay-1_2.jpeg", "24hr-Monterey-Bay-1_3.jpeg", "24hr-Monterey-Bay-1_4.jpeg", "24hr-Monterey-Bay-1_5.jpeg", "24hr-Monterey-Bay-1_6.jpeg", "24hr-Monterey-Bay-1_7.jpeg", "24hr-Monterey-Bay-1_8.jpeg", "24hr-Monterey-Bay-1_9.jpeg", "24hr-Monterey-Bay-1_10.jpeg", "24hr-Monterey-Bay-1_11.jpeg", "24hr-Monterey-Bay-1_12.jpeg", "24hr-Monterey-Bay-1_13.jpeg", "24hr-Monterey-Bay-1_14.jpeg", "24hr-Monterey-Bay-1_15.jpeg", "24hr-Monterey-Bay-1_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Monterey-Bay-2", "name": "Monterey Bay #2", "images": ["24hr-Monterey-Bay-2_1.jpeg", "24hr-Monterey-Bay-2_2.jpeg", "24hr-Monterey-Bay-2_3.jpeg", "24hr-Monterey-Bay-2_4.jpeg", "24hr-Monterey-Bay-2_5.jpeg", "24hr-Monterey-Bay-2_6.jpeg", "24hr-Monterey-Bay-2_7.jpeg", "24hr-Monterey-Bay-2_8.jpeg", "24hr-Monterey-Bay-2_9.jpeg", "24hr-Monterey-Bay-2_10.jpeg", "24hr-Monterey-Bay-2_11.jpeg", "24hr-Monterey-Bay-2_12.jpeg", "24hr-Monterey-Bay-2_13.jpeg", "24hr-Monterey-Bay-2_14.jpeg", "24hr-Monterey-Bay-2_15.jpeg", "24hr-Monterey-Bay-2_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Monterey-Hills-1", "name": "Monterey Hills #1", "images": ["24hr-Monterey-Hills-1_1.jpeg", "24hr-Monterey-Hills-1_2.jpeg", "24hr-Monterey-Hills-1_3.jpeg", "24hr-Monterey-Hills-1_4.jpeg", "24hr-Monterey-Hills-1_5.jpeg", "24hr-Monterey-Hills-1_6.jpeg", "24hr-Monterey-Hills-1_7.jpeg", "24hr-Monterey-Hills-1_8.jpeg", "24hr-Monterey-Hills-1_9.jpeg", "24hr-Monterey-Hills-1_10.jpeg", "24hr-Monterey-Hills-1_11.jpeg", "24hr-Monterey-Hills-1_12.jpeg", "24hr-Monterey-Hills-1_13.jpeg", "24hr-Monterey-Hills-1_14.jpeg", "24hr-Monterey-Hills-1_15.jpeg", "24hr-Monterey-Hills-1_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Monterey-Hills-2", "name": "Monterey Hills #2", "images": ["24hr-Monterey-Hills-2_1.jpeg", "24hr-Monterey-Hills-2_2.jpeg", "24hr-Monterey-Hills-2_3.jpeg", "24hr-Monterey-Hills-2_4.jpeg", "24hr-Monterey-Hills-2_5.jpeg", "24hr-Monterey-Hills-2_6.jpeg", "24hr-Monterey-Hills-2_7.jpeg", "24hr-Monterey-Hills-2_8.jpeg", "24hr-Monterey-Hills-2_9.jpeg", "24hr-Monterey-Hills-2_10.jpeg", "24hr-Monterey-Hills-2_11.jpeg", "24hr-Monterey-Hills-2_12.jpeg", "24hr-Monterey-Hills-2_13.jpeg", "24hr-Monterey-Hills-2_14.jpeg", "24hr-Monterey-Hills-2_15.jpeg", "24hr-Monterey-Hills-2_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Monterey-Hills-3", "name": "Monterey Hills #3", "images": ["24hr-Monterey-Hills-3_1.jpeg", "24hr-Monterey-Hills-3_2.jpeg", "24hr-Monterey-Hills-3_3.jpeg", "24hr-Monterey-Hills-3_4.jpeg", "24hr-Monterey-Hills-3_5.jpeg", "24hr-Monterey-Hills-3_6.jpeg", "24hr-Monterey-Hills-3_7.jpeg", "24hr-Monterey-Hills-3_8.jpeg", "24hr-Monterey-Hills-3_9.jpeg", "24hr-Monterey-Hills-3_10.jpeg", "24hr-Monterey-Hills-3_11.jpeg", "24hr-Monterey-Hills-3_12.jpeg", "24hr-Monterey-Hills-3_13.jpeg", "24hr-Monterey-Hills-3_14.jpeg", "24hr-Monterey-Hills-3_15.jpeg", "24hr-Monterey-Hills-3_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Monument-1-Mix", "name": "Monument 1 Mix", "images": ["24hr-Monument-1-Mix_1.jpeg", "24hr-Monument-1-Mix_2.jpeg", "24hr-Monument-1-Mix_3.jpeg", "24hr-Monument-1-Mix_4.jpeg", "24hr-Monument-1-Mix_5.jpeg", "24hr-Monument-1-Mix_6.jpeg", "24hr-Monument-1-Mix_7.jpeg", "24hr-Monument-1-Mix_8.jpeg", "24hr-Monument-1-Mix_9.jpeg", "24hr-Monument-1-Mix_10.jpeg", "24hr-Monument-1-Mix_11.jpeg", "24hr-Monument-1-Mix_12.jpeg", "24hr-Monument-1-Mix_13.jpeg", "24hr-Monument-1-Mix_14.jpeg", "24hr-Monument-1-Mix_15.jpeg", "24hr-Monument-1-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-MonumentValley", "name": "Monument Valley", "images": ["24hr-MonumentValley_1.jpeg", "24hr-MonumentValley_2.jpeg", "24hr-MonumentValley_3.jpeg", "24hr-MonumentValley_4.jpeg", "24hr-MonumentValley_5.jpeg", "24hr-MonumentValley_6.jpeg", "24hr-MonumentValley_7.jpeg", "24hr-MonumentValley_8.jpeg", "24hr-MonumentValley_9.jpeg", "24hr-MonumentValley_10.jpeg", "24hr-MonumentValley_11.jpeg", "24hr-MonumentValley_12.jpeg", "24hr-MonumentValley_13.jpeg", "24hr-MonumentValley_14.jpeg", "24hr-MonumentValley_15.jpeg", "24hr-MonumentValley_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Mount-Everest-2026", "name": "Mount Everest 2026", "images": ["24hr-Mount-Everest-2026_1.jpeg", "24hr-Mount-Everest-2026_2.jpeg", "24hr-Mount-Everest-2026_3.jpeg", "24hr-Mount-Everest-2026_4.jpeg", "24hr-Mount-Everest-2026_5.jpeg", "24hr-Mount-Everest-2026_6.jpeg", "24hr-Mount-Everest-2026_7.jpeg", "24hr-Mount-Everest-2026_8.jpeg", "24hr-Mount-Everest-2026_9.jpeg", "24hr-Mount-Everest-2026_10.jpeg", "24hr-Mount-Everest-2026_11.jpeg", "24hr-Mount-Everest-2026_12.jpeg", "24hr-Mount-Everest-2026_13.jpeg", "24hr-Mount-Everest-2026_14.jpeg", "24hr-Mount-Everest-2026_15.jpeg", "24hr-Mount-Everest-2026_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Mt-Hood-Air", "name": "Mt Hood Air", "images": ["24hr-Mt-Hood-Air_1.jpeg", "24hr-Mt-Hood-Air_2.jpeg", "24hr-Mt-Hood-Air_3.jpeg", "24hr-Mt-Hood-Air_4.jpeg", "24hr-Mt-Hood-Air_5.jpeg", "24hr-Mt-Hood-Air_6.jpeg", "24hr-Mt-Hood-Air_7.jpeg", "24hr-Mt-Hood-Air_8.jpeg", "24hr-Mt-Hood-Air_9.jpeg", "24hr-Mt-Hood-Air_10.jpeg", "24hr-Mt-Hood-Air_11.jpeg", "24hr-Mt-Hood-Air_12.jpeg", "24hr-Mt-Hood-Air_13.jpeg", "24hr-Mt-Hood-Air_14.jpeg", "24hr-Mt-Hood-Air_15.jpeg", "24hr-Mt-Hood-Air_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Nevinas", "name": "Nevinas", "images": ["24hr-Nevinas_1.jpeg", "24hr-Nevinas_2.jpeg", "24hr-Nevinas_3.jpeg", "24hr-Nevinas_4.jpeg", "24hr-Nevinas_5.jpeg", "24hr-Nevinas_6.jpeg", "24hr-Nevinas_7.jpeg", "24hr-Nevinas_8.jpeg", "24hr-Nevinas_9.jpeg", "24hr-Nevinas_10.jpeg", "24hr-Nevinas_11.jpeg", "24hr-Nevinas_12.jpeg", "24hr-Nevinas_13.jpeg", "24hr-Nevinas_14.jpeg", "24hr-Nevinas_15.jpeg", "24hr-Nevinas_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-New-York-1-Mix", "name": "New York 1 Mix", "images": ["24hr-New-York-1-Mix_1.jpeg", "24hr-New-York-1-Mix_2.jpeg", "24hr-New-York-1-Mix_3.jpeg", "24hr-New-York-1-Mix_4.jpeg", "24hr-New-York-1-Mix_5.jpeg", "24hr-New-York-1-Mix_6.jpeg", "24hr-New-York-1-Mix_7.jpeg", "24hr-New-York-1-Mix_8.jpeg", "24hr-New-York-1-Mix_9.jpeg", "24hr-New-York-1-Mix_10.jpeg", "24hr-New-York-1-Mix_11.jpeg", "24hr-New-York-1-Mix_12.jpeg", "24hr-New-York-1-Mix_13.jpeg", "24hr-New-York-1-Mix_14.jpeg", "24hr-New-York-1-Mix_15.jpeg", "24hr-New-York-1-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-New-York-2-Mix", "name": "New York 2 Mix", "images": ["24hr-New-York-2-Mix_1.jpeg", "24hr-New-York-2-Mix_2.jpeg", "24hr-New-York-2-Mix_3.jpeg", "24hr-New-York-2-Mix_4.jpeg", "24hr-New-York-2-Mix_5.jpeg", "24hr-New-York-2-Mix_6.jpeg", "24hr-New-York-2-Mix_7.jpeg", "24hr-New-York-2-Mix_8.jpeg", "24hr-New-York-2-Mix_9.jpeg", "24hr-New-York-2-Mix_10.jpeg", "24hr-New-York-2-Mix_11.jpeg", "24hr-New-York-2-Mix_12.jpeg", "24hr-New-York-2-Mix_13.jpeg", "24hr-New-York-2-Mix_14.jpeg", "24hr-New-York-2-Mix_15.jpeg", "24hr-New-York-2-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-New-Zealand-Nature", "name": "New Zealand Nature", "images": ["24hr-New-Zealand-Nature_1.jpeg", "24hr-New-Zealand-Nature_2.jpeg", "24hr-New-Zealand-Nature_3.jpeg", "24hr-New-Zealand-Nature_4.jpeg", "24hr-New-Zealand-Nature_5.jpeg", "24hr-New-Zealand-Nature_6.jpeg", "24hr-New-Zealand-Nature_7.jpeg", "24hr-New-Zealand-Nature_8.jpeg", "24hr-New-Zealand-Nature_9.jpeg", "24hr-New-Zealand-Nature_10.jpeg", "24hr-New-Zealand-Nature_11.jpeg", "24hr-New-Zealand-Nature_12.jpeg", "24hr-New-Zealand-Nature_13.jpeg", "24hr-New-Zealand-Nature_14.jpeg", "24hr-New-Zealand-Nature_15.jpeg", "24hr-New-Zealand-Nature_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-New-Zealand-Taupo", "name": "New Zealand Taupo", "images": ["24hr-New-Zealand-Taupo_1.jpeg", "24hr-New-Zealand-Taupo_2.jpeg", "24hr-New-Zealand-Taupo_3.jpeg", "24hr-New-Zealand-Taupo_4.jpeg", "24hr-New-Zealand-Taupo_5.jpeg", "24hr-New-Zealand-Taupo_6.jpeg", "24hr-New-Zealand-Taupo_7.jpeg", "24hr-New-Zealand-Taupo_8.jpeg", "24hr-New-Zealand-Taupo_9.jpeg", "24hr-New-Zealand-Taupo_10.jpeg", "24hr-New-Zealand-Taupo_11.jpeg", "24hr-New-Zealand-Taupo_12.jpeg", "24hr-New-Zealand-Taupo_13.jpeg", "24hr-New-Zealand-Taupo_14.jpeg", "24hr-New-Zealand-Taupo_15.jpeg", "24hr-New-Zealand-Taupo_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-NewOrleans", "name": "New Orleans", "images": ["24hr-NewOrleans_1.jpeg", "24hr-NewOrleans_2.jpeg", "24hr-NewOrleans_3.jpeg", "24hr-NewOrleans_4.jpeg", "24hr-NewOrleans_5.jpeg", "24hr-NewOrleans_6.jpeg", "24hr-NewOrleans_7.jpeg", "24hr-NewOrleans_8.jpeg", "24hr-NewOrleans_9.jpeg", "24hr-NewOrleans_10.jpeg", "24hr-NewOrleans_11.jpeg", "24hr-NewOrleans_12.jpeg", "24hr-NewOrleans_13.jpeg", "24hr-NewOrleans_14.jpeg", "24hr-NewOrleans_15.jpeg", "24hr-NewOrleans_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-NewYork", "name": "New York City", "images": ["24hr-NewYork_1.jpeg", "24hr-NewYork_2.jpeg", "24hr-NewYork_3.jpeg", "24hr-NewYork_4.jpeg", "24hr-NewYork_5.jpeg", "24hr-NewYork_6.jpeg", "24hr-NewYork_7.jpeg", "24hr-NewYork_8.jpeg", "24hr-NewYork_9.jpeg", "24hr-NewYork_10.jpeg", "24hr-NewYork_11.jpeg", "24hr-NewYork_12.jpeg", "24hr-NewYork_13.jpeg", "24hr-NewYork_14.jpeg", "24hr-NewYork_15.jpeg", "24hr-NewYork_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-NewYork-Maiden", "name": "New York Maiden Lane", "images": ["24hr-NewYork-Maiden_1.jpeg", "24hr-NewYork-Maiden_2.jpeg", "24hr-NewYork-Maiden_3.jpeg", "24hr-NewYork-Maiden_4.jpeg", "24hr-NewYork-Maiden_5.jpeg", "24hr-NewYork-Maiden_6.jpeg", "24hr-NewYork-Maiden_7.jpeg", "24hr-NewYork-Maiden_8.jpeg", "24hr-NewYork-Maiden_9.jpeg", "24hr-NewYork-Maiden_10.jpeg", "24hr-NewYork-Maiden_11.jpeg", "24hr-NewYork-Maiden_12.jpeg", "24hr-NewYork-Maiden_13.jpeg", "24hr-NewYork-Maiden_14.jpeg", "24hr-NewYork-Maiden_15.jpeg", "24hr-NewYork-Maiden_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-NewYorkWinter", "name": "New York City Winter", "images": ["24hr-NewYorkWinter_1.jpeg", "24hr-NewYorkWinter_2.jpeg", "24hr-NewYorkWinter_3.jpeg", "24hr-NewYorkWinter_4.jpeg", "24hr-NewYorkWinter_5.jpeg", "24hr-NewYorkWinter_6.jpeg", "24hr-NewYorkWinter_7.jpeg", "24hr-NewYorkWinter_8.jpeg", "24hr-NewYorkWinter_9.jpeg", "24hr-NewYorkWinter_10.jpeg", "24hr-NewYorkWinter_11.jpeg", "24hr-NewYorkWinter_12.jpeg", "24hr-NewYorkWinter_13.jpeg", "24hr-NewYorkWinter_14.jpeg", "24hr-NewYorkWinter_15.jpeg", "24hr-NewYorkWinter_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-NewZealand-Mix", "name": "New Zealand Mix", "images": ["24hr-NewZealand-Mix_1.jpeg", "24hr-NewZealand-Mix_2.jpeg", "24hr-NewZealand-Mix_3.jpeg", "24hr-NewZealand-Mix_4.jpeg", "24hr-NewZealand-Mix_5.jpeg", "24hr-NewZealand-Mix_6.jpeg", "24hr-NewZealand-Mix_7.jpeg", "24hr-NewZealand-Mix_8.jpeg", "24hr-NewZealand-Mix_9.jpeg", "24hr-NewZealand-Mix_10.jpeg", "24hr-NewZealand-Mix_11.jpeg", "24hr-NewZealand-Mix_12.jpeg", "24hr-NewZealand-Mix_13.jpeg", "24hr-NewZealand-Mix_14.jpeg", "24hr-NewZealand-Mix_15.jpeg", "24hr-NewZealand-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Niagara-Falls-2026", "name": "Niagara Falls 2026", "images": ["24hr-Niagara-Falls-2026_1.jpeg", "24hr-Niagara-Falls-2026_2.jpeg", "24hr-Niagara-Falls-2026_3.jpeg", "24hr-Niagara-Falls-2026_4.jpeg", "24hr-Niagara-Falls-2026_5.jpeg", "24hr-Niagara-Falls-2026_6.jpeg", "24hr-Niagara-Falls-2026_7.jpeg", "24hr-Niagara-Falls-2026_8.jpeg", "24hr-Niagara-Falls-2026_9.jpeg", "24hr-Niagara-Falls-2026_10.jpeg", "24hr-Niagara-Falls-2026_11.jpeg", "24hr-Niagara-Falls-2026_12.jpeg", "24hr-Niagara-Falls-2026_13.jpeg", "24hr-Niagara-Falls-2026_14.jpeg", "24hr-Niagara-Falls-2026_15.jpeg", "24hr-Niagara-Falls-2026_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Nyc-2026-Mix", "name": "Nyc 2026 Mix", "images": ["24hr-Nyc-2026-Mix_1.jpeg", "24hr-Nyc-2026-Mix_2.jpeg", "24hr-Nyc-2026-Mix_3.jpeg", "24hr-Nyc-2026-Mix_4.jpeg", "24hr-Nyc-2026-Mix_5.jpeg", "24hr-Nyc-2026-Mix_6.jpeg", "24hr-Nyc-2026-Mix_7.jpeg", "24hr-Nyc-2026-Mix_8.jpeg", "24hr-Nyc-2026-Mix_9.jpeg", "24hr-Nyc-2026-Mix_10.jpeg", "24hr-Nyc-2026-Mix_11.jpeg", "24hr-Nyc-2026-Mix_12.jpeg", "24hr-Nyc-2026-Mix_13.jpeg", "24hr-Nyc-2026-Mix_14.jpeg", "24hr-Nyc-2026-Mix_15.jpeg", "24hr-Nyc-2026-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Olympic-Mountains-Mix", "name": "Olympic Mountains Mix", "images": ["24hr-Olympic-Mountains-Mix_1.jpeg", "24hr-Olympic-Mountains-Mix_2.jpeg", "24hr-Olympic-Mountains-Mix_3.jpeg", "24hr-Olympic-Mountains-Mix_4.jpeg", "24hr-Olympic-Mountains-Mix_5.jpeg", "24hr-Olympic-Mountains-Mix_6.jpeg", "24hr-Olympic-Mountains-Mix_7.jpeg", "24hr-Olympic-Mountains-Mix_8.jpeg", "24hr-Olympic-Mountains-Mix_9.jpeg", "24hr-Olympic-Mountains-Mix_10.jpeg", "24hr-Olympic-Mountains-Mix_11.jpeg", "24hr-Olympic-Mountains-Mix_12.jpeg", "24hr-Olympic-Mountains-Mix_13.jpeg", "24hr-Olympic-Mountains-Mix_14.jpeg", "24hr-Olympic-Mountains-Mix_15.jpeg", "24hr-Olympic-Mountains-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Oregon-Mt-Hood", "name": "Oregon Mt Hood", "images": ["24hr-Oregon-Mt-Hood_1.jpeg", "24hr-Oregon-Mt-Hood_2.jpeg", "24hr-Oregon-Mt-Hood_3.jpeg", "24hr-Oregon-Mt-Hood_4.jpeg", "24hr-Oregon-Mt-Hood_5.jpeg", "24hr-Oregon-Mt-Hood_6.jpeg", "24hr-Oregon-Mt-Hood_7.jpeg", "24hr-Oregon-Mt-Hood_8.jpeg", "24hr-Oregon-Mt-Hood_9.jpeg", "24hr-Oregon-Mt-Hood_10.jpeg", "24hr-Oregon-Mt-Hood_11.jpeg", "24hr-Oregon-Mt-Hood_12.jpeg", "24hr-Oregon-Mt-Hood_13.jpeg", "24hr-Oregon-Mt-Hood_14.jpeg", "24hr-Oregon-Mt-Hood_15.jpeg", "24hr-Oregon-Mt-Hood_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Oregon-Nature-1", "name": "Oregon Nature 1", "images": ["24hr-Oregon-Nature-1_1.jpeg", "24hr-Oregon-Nature-1_2.jpeg", "24hr-Oregon-Nature-1_3.jpeg", "24hr-Oregon-Nature-1_4.jpeg", "24hr-Oregon-Nature-1_5.jpeg", "24hr-Oregon-Nature-1_6.jpeg", "24hr-Oregon-Nature-1_7.jpeg", "24hr-Oregon-Nature-1_8.jpeg", "24hr-Oregon-Nature-1_9.jpeg", "24hr-Oregon-Nature-1_10.jpeg", "24hr-Oregon-Nature-1_11.jpeg", "24hr-Oregon-Nature-1_12.jpeg", "24hr-Oregon-Nature-1_13.jpeg", "24hr-Oregon-Nature-1_14.jpeg", "24hr-Oregon-Nature-1_15.jpeg", "24hr-Oregon-Nature-1_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Oxenhope", "name": "Oxenhope", "images": ["24hr-Oxenhope_1.jpeg", "24hr-Oxenhope_2.jpeg", "24hr-Oxenhope_3.jpeg", "24hr-Oxenhope_4.jpeg", "24hr-Oxenhope_5.jpeg", "24hr-Oxenhope_6.jpeg", "24hr-Oxenhope_7.jpeg", "24hr-Oxenhope_8.jpeg", "24hr-Oxenhope_9.jpeg", "24hr-Oxenhope_10.jpeg", "24hr-Oxenhope_11.jpeg", "24hr-Oxenhope_12.jpeg", "24hr-Oxenhope_13.jpeg", "24hr-Oxenhope_14.jpeg", "24hr-Oxenhope_15.jpeg", "24hr-Oxenhope_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Painted-Ladies-2026", "name": "Painted Ladies 2026", "images": ["24hr-Painted-Ladies-2026_1.jpeg", "24hr-Painted-Ladies-2026_2.jpeg", "24hr-Painted-Ladies-2026_3.jpeg", "24hr-Painted-Ladies-2026_4.jpeg", "24hr-Painted-Ladies-2026_5.jpeg", "24hr-Painted-Ladies-2026_6.jpeg", "24hr-Painted-Ladies-2026_7.jpeg", "24hr-Painted-Ladies-2026_8.jpeg", "24hr-Painted-Ladies-2026_9.jpeg", "24hr-Painted-Ladies-2026_10.jpeg", "24hr-Painted-Ladies-2026_11.jpeg", "24hr-Painted-Ladies-2026_12.jpeg", "24hr-Painted-Ladies-2026_13.jpeg", "24hr-Painted-Ladies-2026_14.jpeg", "24hr-Painted-Ladies-2026_15.jpeg", "24hr-Painted-Ladies-2026_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Palm-Oasis-2026", "name": "Palm Oasis 2026", "images": ["24hr-Palm-Oasis-2026_1.jpeg", "24hr-Palm-Oasis-2026_2.jpeg", "24hr-Palm-Oasis-2026_3.jpeg", "24hr-Palm-Oasis-2026_4.jpeg", "24hr-Palm-Oasis-2026_5.jpeg", "24hr-Palm-Oasis-2026_6.jpeg", "24hr-Palm-Oasis-2026_7.jpeg", "24hr-Palm-Oasis-2026_8.jpeg", "24hr-Palm-Oasis-2026_9.jpeg", "24hr-Palm-Oasis-2026_10.jpeg", "24hr-Palm-Oasis-2026_11.jpeg", "24hr-Palm-Oasis-2026_12.jpeg", "24hr-Palm-Oasis-2026_13.jpeg", "24hr-Palm-Oasis-2026_14.jpeg", "24hr-Palm-Oasis-2026_15.jpeg", "24hr-Palm-Oasis-2026_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Paris-1", "name": "Paris 1", "images": ["24hr-Paris-1_1.jpeg", "24hr-Paris-1_2.jpeg", "24hr-Paris-1_3.jpeg", "24hr-Paris-1_4.jpeg", "24hr-Paris-1_5.jpeg", "24hr-Paris-1_6.jpeg", "24hr-Paris-1_7.jpeg", "24hr-Paris-1_8.jpeg", "24hr-Paris-1_9.jpeg", "24hr-Paris-1_10.jpeg", "24hr-Paris-1_11.jpeg", "24hr-Paris-1_12.jpeg", "24hr-Paris-1_13.jpeg", "24hr-Paris-1_14.jpeg", "24hr-Paris-1_15.jpeg", "24hr-Paris-1_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Paris-2", "name": "Paris 2", "images": ["24hr-Paris-2_1.jpeg", "24hr-Paris-2_2.jpeg", "24hr-Paris-2_3.jpeg", "24hr-Paris-2_4.jpeg", "24hr-Paris-2_5.jpeg", "24hr-Paris-2_6.jpeg", "24hr-Paris-2_7.jpeg", "24hr-Paris-2_8.jpeg", "24hr-Paris-2_9.jpeg", "24hr-Paris-2_10.jpeg", "24hr-Paris-2_11.jpeg", "24hr-Paris-2_12.jpeg", "24hr-Paris-2_13.jpeg", "24hr-Paris-2_14.jpeg", "24hr-Paris-2_15.jpeg", "24hr-Paris-2_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Paris-Mix", "name": "Paris Mix", "images": ["24hr-Paris-Mix_1.jpeg", "24hr-Paris-Mix_2.jpeg", "24hr-Paris-Mix_3.jpeg", "24hr-Paris-Mix_4.jpeg", "24hr-Paris-Mix_5.jpeg", "24hr-Paris-Mix_6.jpeg", "24hr-Paris-Mix_7.jpeg", "24hr-Paris-Mix_8.jpeg", "24hr-Paris-Mix_9.jpeg", "24hr-Paris-Mix_10.jpeg", "24hr-Paris-Mix_11.jpeg", "24hr-Paris-Mix_12.jpeg", "24hr-Paris-Mix_13.jpeg", "24hr-Paris-Mix_14.jpeg", "24hr-Paris-Mix_15.jpeg", "24hr-Paris-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Philly-2026-Mix", "name": "Philly 2026 Mix", "images": ["24hr-Philly-2026-Mix_1.jpeg", "24hr-Philly-2026-Mix_2.jpeg", "24hr-Philly-2026-Mix_3.jpeg", "24hr-Philly-2026-Mix_4.jpeg", "24hr-Philly-2026-Mix_5.jpeg", "24hr-Philly-2026-Mix_6.jpeg", "24hr-Philly-2026-Mix_7.jpeg", "24hr-Philly-2026-Mix_8.jpeg", "24hr-Philly-2026-Mix_9.jpeg", "24hr-Philly-2026-Mix_10.jpeg", "24hr-Philly-2026-Mix_11.jpeg", "24hr-Philly-2026-Mix_12.jpeg", "24hr-Philly-2026-Mix_13.jpeg", "24hr-Philly-2026-Mix_14.jpeg", "24hr-Philly-2026-Mix_15.jpeg", "24hr-Philly-2026-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Polson", "name": "Polson", "images": ["24hr-Polson_1.jpeg", "24hr-Polson_2.jpeg", "24hr-Polson_3.jpeg", "24hr-Polson_4.jpeg", "24hr-Polson_5.jpeg", "24hr-Polson_6.jpeg", "24hr-Polson_7.jpeg", "24hr-Polson_8.jpeg", "24hr-Polson_9.jpeg", "24hr-Polson_10.jpeg", "24hr-Polson_11.jpeg", "24hr-Polson_12.jpeg", "24hr-Polson_13.jpeg", "24hr-Polson_14.jpeg", "24hr-Polson_15.jpeg", "24hr-Polson_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-PyramidLake-Mix", "name": "Pyramid Lake Mix", "images": ["24hr-PyramidLake-Mix_1.jpeg", "24hr-PyramidLake-Mix_2.jpeg", "24hr-PyramidLake-Mix_3.jpeg", "24hr-PyramidLake-Mix_4.jpeg", "24hr-PyramidLake-Mix_5.jpeg", "24hr-PyramidLake-Mix_6.jpeg", "24hr-PyramidLake-Mix_7.jpeg", "24hr-PyramidLake-Mix_8.jpeg", "24hr-PyramidLake-Mix_9.jpeg", "24hr-PyramidLake-Mix_10.jpeg", "24hr-PyramidLake-Mix_11.jpeg", "24hr-PyramidLake-Mix_12.jpeg", "24hr-PyramidLake-Mix_13.jpeg", "24hr-PyramidLake-Mix_14.jpeg", "24hr-PyramidLake-Mix_15.jpeg", "24hr-PyramidLake-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-San-Diego-2026-Mix", "name": "San Diego 2026 Mix", "images": ["24hr-San-Diego-2026-Mix_1.jpeg", "24hr-San-Diego-2026-Mix_2.jpeg", "24hr-San-Diego-2026-Mix_3.jpeg", "24hr-San-Diego-2026-Mix_4.jpeg", "24hr-San-Diego-2026-Mix_5.jpeg", "24hr-San-Diego-2026-Mix_6.jpeg", "24hr-San-Diego-2026-Mix_7.jpeg", "24hr-San-Diego-2026-Mix_8.jpeg", "24hr-San-Diego-2026-Mix_9.jpeg", "24hr-San-Diego-2026-Mix_10.jpeg", "24hr-San-Diego-2026-Mix_11.jpeg", "24hr-San-Diego-2026-Mix_12.jpeg", "24hr-San-Diego-2026-Mix_13.jpeg", "24hr-San-Diego-2026-Mix_14.jpeg", "24hr-San-Diego-2026-Mix_15.jpeg", "24hr-San-Diego-2026-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-SanFrancisco", "name": "San Francisco", "images": ["24hr-SanFrancisco_1.jpeg", "24hr-SanFrancisco_2.jpeg", "24hr-SanFrancisco_3.jpeg", "24hr-SanFrancisco_4.jpeg", "24hr-SanFrancisco_5.jpeg", "24hr-SanFrancisco_6.jpeg", "24hr-SanFrancisco_7.jpeg", "24hr-SanFrancisco_8.jpeg", "24hr-SanFrancisco_9.jpeg", "24hr-SanFrancisco_10.jpeg", "24hr-SanFrancisco_11.jpeg", "24hr-SanFrancisco_12.jpeg", "24hr-SanFrancisco_13.jpeg", "24hr-SanFrancisco_14.jpeg", "24hr-SanFrancisco_15.jpeg", "24hr-SanFrancisco_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-SanFranciscoEast", "name": "San Francisco East", "images": ["24hr-SanFranciscoEast_1.jpeg", "24hr-SanFranciscoEast_2.jpeg", "24hr-SanFranciscoEast_3.jpeg", "24hr-SanFranciscoEast_4.jpeg", "24hr-SanFranciscoEast_5.jpeg", "24hr-SanFranciscoEast_6.jpeg", "24hr-SanFranciscoEast_7.jpeg", "24hr-SanFranciscoEast_8.jpeg", "24hr-SanFranciscoEast_9.jpeg", "24hr-SanFranciscoEast_10.jpeg", "24hr-SanFranciscoEast_11.jpeg", "24hr-SanFranciscoEast_12.jpeg", "24hr-SanFranciscoEast_13.jpeg", "24hr-SanFranciscoEast_14.jpeg", "24hr-SanFranciscoEast_15.jpeg", "24hr-SanFranciscoEast_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Santa-Monica-1", "name": "Santa Monica 1", "images": ["24hr-Santa-Monica-1_1.jpeg", "24hr-Santa-Monica-1_2.jpeg", "24hr-Santa-Monica-1_3.jpeg", "24hr-Santa-Monica-1_4.jpeg", "24hr-Santa-Monica-1_5.jpeg", "24hr-Santa-Monica-1_6.jpeg", "24hr-Santa-Monica-1_7.jpeg", "24hr-Santa-Monica-1_8.jpeg", "24hr-Santa-Monica-1_9.jpeg", "24hr-Santa-Monica-1_10.jpeg", "24hr-Santa-Monica-1_11.jpeg", "24hr-Santa-Monica-1_12.jpeg", "24hr-Santa-Monica-1_13.jpeg", "24hr-Santa-Monica-1_14.jpeg", "24hr-Santa-Monica-1_15.jpeg", "24hr-Santa-Monica-1_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Seattle-Mix", "name": "Seattle Mix", "images": ["24hr-Seattle-Mix_1.jpeg", "24hr-Seattle-Mix_2.jpeg", "24hr-Seattle-Mix_3.jpeg", "24hr-Seattle-Mix_4.jpeg", "24hr-Seattle-Mix_5.jpeg", "24hr-Seattle-Mix_6.jpeg", "24hr-Seattle-Mix_7.jpeg", "24hr-Seattle-Mix_8.jpeg", "24hr-Seattle-Mix_9.jpeg", "24hr-Seattle-Mix_10.jpeg", "24hr-Seattle-Mix_11.jpeg", "24hr-Seattle-Mix_12.jpeg", "24hr-Seattle-Mix_13.jpeg", "24hr-Seattle-Mix_14.jpeg", "24hr-Seattle-Mix_15.jpeg", "24hr-Seattle-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Sf-1-Mix", "name": "Sf 1 Mix", "images": ["24hr-Sf-1-Mix_1.jpeg", "24hr-Sf-1-Mix_2.jpeg", "24hr-Sf-1-Mix_3.jpeg", "24hr-Sf-1-Mix_4.jpeg", "24hr-Sf-1-Mix_5.jpeg", "24hr-Sf-1-Mix_6.jpeg", "24hr-Sf-1-Mix_7.jpeg", "24hr-Sf-1-Mix_8.jpeg", "24hr-Sf-1-Mix_9.jpeg", "24hr-Sf-1-Mix_10.jpeg", "24hr-Sf-1-Mix_11.jpeg", "24hr-Sf-1-Mix_12.jpeg", "24hr-Sf-1-Mix_13.jpeg", "24hr-Sf-1-Mix_14.jpeg", "24hr-Sf-1-Mix_15.jpeg", "24hr-Sf-1-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Sf-Ggb-2026", "name": "Sf Ggb 2026", "images": ["24hr-Sf-Ggb-2026_1.jpeg", "24hr-Sf-Ggb-2026_2.jpeg", "24hr-Sf-Ggb-2026_3.jpeg", "24hr-Sf-Ggb-2026_4.jpeg", "24hr-Sf-Ggb-2026_5.jpeg", "24hr-Sf-Ggb-2026_6.jpeg", "24hr-Sf-Ggb-2026_7.jpeg", "24hr-Sf-Ggb-2026_8.jpeg", "24hr-Sf-Ggb-2026_9.jpeg", "24hr-Sf-Ggb-2026_10.jpeg", "24hr-Sf-Ggb-2026_11.jpeg", "24hr-Sf-Ggb-2026_12.jpeg", "24hr-Sf-Ggb-2026_13.jpeg", "24hr-Sf-Ggb-2026_14.jpeg", "24hr-Sf-Ggb-2026_15.jpeg", "24hr-Sf-Ggb-2026_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Sf-Radish-Remaster", "name": "Sf Radish Remaster", "images": ["24hr-Sf-Radish-Remaster_1.jpeg", "24hr-Sf-Radish-Remaster_2.jpeg", "24hr-Sf-Radish-Remaster_3.jpeg", "24hr-Sf-Radish-Remaster_4.jpeg", "24hr-Sf-Radish-Remaster_5.jpeg", "24hr-Sf-Radish-Remaster_6.jpeg", "24hr-Sf-Radish-Remaster_7.jpeg", "24hr-Sf-Radish-Remaster_8.jpeg", "24hr-Sf-Radish-Remaster_9.jpeg", "24hr-Sf-Radish-Remaster_10.jpeg", "24hr-Sf-Radish-Remaster_11.jpeg", "24hr-Sf-Radish-Remaster_12.jpeg", "24hr-Sf-Radish-Remaster_13.jpeg", "24hr-Sf-Radish-Remaster_14.jpeg", "24hr-Sf-Radish-Remaster_15.jpeg", "24hr-Sf-Radish-Remaster_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Singapore-1-Mix", "name": "Singapore 1 Mix", "images": ["24hr-Singapore-1-Mix_1.jpeg", "24hr-Singapore-1-Mix_2.jpeg", "24hr-Singapore-1-Mix_3.jpeg", "24hr-Singapore-1-Mix_4.jpeg", "24hr-Singapore-1-Mix_5.jpeg", "24hr-Singapore-1-Mix_6.jpeg", "24hr-Singapore-1-Mix_7.jpeg", "24hr-Singapore-1-Mix_8.jpeg", "24hr-Singapore-1-Mix_9.jpeg", "24hr-Singapore-1-Mix_10.jpeg", "24hr-Singapore-1-Mix_11.jpeg", "24hr-Singapore-1-Mix_12.jpeg", "24hr-Singapore-1-Mix_13.jpeg", "24hr-Singapore-1-Mix_14.jpeg", "24hr-Singapore-1-Mix_15.jpeg", "24hr-Singapore-1-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Stockholm-Archipelago-2026", "name": "Stockholm Archipelago 2026", "images": ["24hr-Stockholm-Archipelago-2026_1.jpeg", "24hr-Stockholm-Archipelago-2026_2.jpeg", "24hr-Stockholm-Archipelago-2026_3.jpeg", "24hr-Stockholm-Archipelago-2026_4.jpeg", "24hr-Stockholm-Archipelago-2026_5.jpeg", "24hr-Stockholm-Archipelago-2026_6.jpeg", "24hr-Stockholm-Archipelago-2026_7.jpeg", "24hr-Stockholm-Archipelago-2026_8.jpeg", "24hr-Stockholm-Archipelago-2026_9.jpeg", "24hr-Stockholm-Archipelago-2026_10.jpeg", "24hr-Stockholm-Archipelago-2026_11.jpeg", "24hr-Stockholm-Archipelago-2026_12.jpeg", "24hr-Stockholm-Archipelago-2026_13.jpeg", "24hr-Stockholm-Archipelago-2026_14.jpeg", "24hr-Stockholm-Archipelago-2026_15.jpeg", "24hr-Stockholm-Archipelago-2026_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Switzerland-Hergiswil", "name": "Switzerland Hergiswil", "images": ["24hr-Switzerland-Hergiswil_1.jpeg", "24hr-Switzerland-Hergiswil_2.jpeg", "24hr-Switzerland-Hergiswil_3.jpeg", "24hr-Switzerland-Hergiswil_4.jpeg", "24hr-Switzerland-Hergiswil_5.jpeg", "24hr-Switzerland-Hergiswil_6.jpeg", "24hr-Switzerland-Hergiswil_7.jpeg", "24hr-Switzerland-Hergiswil_8.jpeg", "24hr-Switzerland-Hergiswil_9.jpeg", "24hr-Switzerland-Hergiswil_10.jpeg", "24hr-Switzerland-Hergiswil_11.jpeg", "24hr-Switzerland-Hergiswil_12.jpeg", "24hr-Switzerland-Hergiswil_13.jpeg", "24hr-Switzerland-Hergiswil_14.jpeg", "24hr-Switzerland-Hergiswil_15.jpeg", "24hr-Switzerland-Hergiswil_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Tabular-Iceberg-2026", "name": "Tabular Iceberg 2026", "images": ["24hr-Tabular-Iceberg-2026_1.jpeg", "24hr-Tabular-Iceberg-2026_2.jpeg", "24hr-Tabular-Iceberg-2026_3.jpeg", "24hr-Tabular-Iceberg-2026_4.jpeg", "24hr-Tabular-Iceberg-2026_5.jpeg", "24hr-Tabular-Iceberg-2026_6.jpeg", "24hr-Tabular-Iceberg-2026_7.jpeg", "24hr-Tabular-Iceberg-2026_8.jpeg", "24hr-Tabular-Iceberg-2026_9.jpeg", "24hr-Tabular-Iceberg-2026_10.jpeg", "24hr-Tabular-Iceberg-2026_11.jpeg", "24hr-Tabular-Iceberg-2026_12.jpeg", "24hr-Tabular-Iceberg-2026_13.jpeg", "24hr-Tabular-Iceberg-2026_14.jpeg", "24hr-Tabular-Iceberg-2026_15.jpeg", "24hr-Tabular-Iceberg-2026_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Tahoe-2026", "name": "Tahoe 2026", "images": ["24hr-Tahoe-2026_1.jpeg", "24hr-Tahoe-2026_2.jpeg", "24hr-Tahoe-2026_3.jpeg", "24hr-Tahoe-2026_4.jpeg", "24hr-Tahoe-2026_5.jpeg", "24hr-Tahoe-2026_6.jpeg", "24hr-Tahoe-2026_7.jpeg", "24hr-Tahoe-2026_8.jpeg", "24hr-Tahoe-2026_9.jpeg", "24hr-Tahoe-2026_10.jpeg", "24hr-Tahoe-2026_11.jpeg", "24hr-Tahoe-2026_12.jpeg", "24hr-Tahoe-2026_13.jpeg", "24hr-Tahoe-2026_14.jpeg", "24hr-Tahoe-2026_15.jpeg", "24hr-Tahoe-2026_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Tahoe-Blue-2026", "name": "Tahoe Blue 2026", "images": ["24hr-Tahoe-Blue-2026_1.jpeg", "24hr-Tahoe-Blue-2026_2.jpeg", "24hr-Tahoe-Blue-2026_3.jpeg", "24hr-Tahoe-Blue-2026_4.jpeg", "24hr-Tahoe-Blue-2026_5.jpeg", "24hr-Tahoe-Blue-2026_6.jpeg", "24hr-Tahoe-Blue-2026_7.jpeg", "24hr-Tahoe-Blue-2026_8.jpeg", "24hr-Tahoe-Blue-2026_9.jpeg", "24hr-Tahoe-Blue-2026_10.jpeg", "24hr-Tahoe-Blue-2026_11.jpeg", "24hr-Tahoe-Blue-2026_12.jpeg", "24hr-Tahoe-Blue-2026_13.jpeg", "24hr-Tahoe-Blue-2026_14.jpeg", "24hr-Tahoe-Blue-2026_15.jpeg", "24hr-Tahoe-Blue-2026_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Tahoe-Dock-2026", "name": "Tahoe Dock 2026", "images": ["24hr-Tahoe-Dock-2026_1.jpeg", "24hr-Tahoe-Dock-2026_2.jpeg", "24hr-Tahoe-Dock-2026_3.jpeg", "24hr-Tahoe-Dock-2026_4.jpeg", "24hr-Tahoe-Dock-2026_5.jpeg", "24hr-Tahoe-Dock-2026_6.jpeg", "24hr-Tahoe-Dock-2026_7.jpeg", "24hr-Tahoe-Dock-2026_8.jpeg", "24hr-Tahoe-Dock-2026_9.jpeg", "24hr-Tahoe-Dock-2026_10.jpeg", "24hr-Tahoe-Dock-2026_11.jpeg", "24hr-Tahoe-Dock-2026_12.jpeg", "24hr-Tahoe-Dock-2026_13.jpeg", "24hr-Tahoe-Dock-2026_14.jpeg", "24hr-Tahoe-Dock-2026_15.jpeg", "24hr-Tahoe-Dock-2026_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Tahoe-Kingsbury", "name": "Tahoe Kingsbury", "images": ["24hr-Tahoe-Kingsbury_1.jpeg", "24hr-Tahoe-Kingsbury_2.jpeg", "24hr-Tahoe-Kingsbury_3.jpeg", "24hr-Tahoe-Kingsbury_4.jpeg", "24hr-Tahoe-Kingsbury_5.jpeg", "24hr-Tahoe-Kingsbury_6.jpeg", "24hr-Tahoe-Kingsbury_7.jpeg", "24hr-Tahoe-Kingsbury_8.jpeg", "24hr-Tahoe-Kingsbury_9.jpeg", "24hr-Tahoe-Kingsbury_10.jpeg", "24hr-Tahoe-Kingsbury_11.jpeg", "24hr-Tahoe-Kingsbury_12.jpeg", "24hr-Tahoe-Kingsbury_13.jpeg", "24hr-Tahoe-Kingsbury_14.jpeg", "24hr-Tahoe-Kingsbury_15.jpeg", "24hr-Tahoe-Kingsbury_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Tahoe-Kingsbury-2", "name": "Tahoe Kingsbury 2", "images": ["24hr-Tahoe-Kingsbury-2_1.jpeg", "24hr-Tahoe-Kingsbury-2_2.jpeg", "24hr-Tahoe-Kingsbury-2_3.jpeg", "24hr-Tahoe-Kingsbury-2_4.jpeg", "24hr-Tahoe-Kingsbury-2_5.jpeg", "24hr-Tahoe-Kingsbury-2_6.jpeg", "24hr-Tahoe-Kingsbury-2_7.jpeg", "24hr-Tahoe-Kingsbury-2_8.jpeg", "24hr-Tahoe-Kingsbury-2_9.jpeg", "24hr-Tahoe-Kingsbury-2_10.jpeg", "24hr-Tahoe-Kingsbury-2_11.jpeg", "24hr-Tahoe-Kingsbury-2_12.jpeg", "24hr-Tahoe-Kingsbury-2_13.jpeg", "24hr-Tahoe-Kingsbury-2_14.jpeg", "24hr-Tahoe-Kingsbury-2_15.jpeg", "24hr-Tahoe-Kingsbury-2_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Tahoe-Mix", "name": "Tahoe Mix", "images": ["24hr-Tahoe-Mix_1.jpeg", "24hr-Tahoe-Mix_2.jpeg", "24hr-Tahoe-Mix_3.jpeg", "24hr-Tahoe-Mix_4.jpeg", "24hr-Tahoe-Mix_5.jpeg", "24hr-Tahoe-Mix_6.jpeg", "24hr-Tahoe-Mix_7.jpeg", "24hr-Tahoe-Mix_8.jpeg", "24hr-Tahoe-Mix_9.jpeg", "24hr-Tahoe-Mix_10.jpeg", "24hr-Tahoe-Mix_11.jpeg", "24hr-Tahoe-Mix_12.jpeg", "24hr-Tahoe-Mix_13.jpeg", "24hr-Tahoe-Mix_14.jpeg", "24hr-Tahoe-Mix_15.jpeg", "24hr-Tahoe-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Thailand-Phuket", "name": "Thailand Phuket", "images": ["24hr-Thailand-Phuket_1.jpeg", "24hr-Thailand-Phuket_2.jpeg", "24hr-Thailand-Phuket_3.jpeg", "24hr-Thailand-Phuket_4.jpeg", "24hr-Thailand-Phuket_5.jpeg", "24hr-Thailand-Phuket_6.jpeg", "24hr-Thailand-Phuket_7.jpeg", "24hr-Thailand-Phuket_8.jpeg", "24hr-Thailand-Phuket_9.jpeg", "24hr-Thailand-Phuket_10.jpeg", "24hr-Thailand-Phuket_11.jpeg", "24hr-Thailand-Phuket_12.jpeg", "24hr-Thailand-Phuket_13.jpeg", "24hr-Thailand-Phuket_14.jpeg", "24hr-Thailand-Phuket_15.jpeg", "24hr-Thailand-Phuket_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-The-Great-Wall-2026-2", "name": "The Great Wall 2026-2", "images": ["24hr-The-Great-Wall-2026-2_1.jpeg", "24hr-The-Great-Wall-2026-2_2.jpeg", "24hr-The-Great-Wall-2026-2_3.jpeg", "24hr-The-Great-Wall-2026-2_4.jpeg", "24hr-The-Great-Wall-2026-2_5.jpeg", "24hr-The-Great-Wall-2026-2_6.jpeg", "24hr-The-Great-Wall-2026-2_7.jpeg", "24hr-The-Great-Wall-2026-2_8.jpeg", "24hr-The-Great-Wall-2026-2_9.jpeg", "24hr-The-Great-Wall-2026-2_10.jpeg", "24hr-The-Great-Wall-2026-2_11.jpeg", "24hr-The-Great-Wall-2026-2_12.jpeg", "24hr-The-Great-Wall-2026-2_13.jpeg", "24hr-The-Great-Wall-2026-2_14.jpeg", "24hr-The-Great-Wall-2026-2_15.jpeg", "24hr-The-Great-Wall-2026-2_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Tokyo-Harijuku", "name": "Tokyo Harijuku", "images": ["24hr-Tokyo-Harijuku_1.jpeg", "24hr-Tokyo-Harijuku_2.jpeg", "24hr-Tokyo-Harijuku_3.jpeg", "24hr-Tokyo-Harijuku_4.jpeg", "24hr-Tokyo-Harijuku_5.jpeg", "24hr-Tokyo-Harijuku_6.jpeg", "24hr-Tokyo-Harijuku_7.jpeg", "24hr-Tokyo-Harijuku_8.jpeg", "24hr-Tokyo-Harijuku_9.jpeg", "24hr-Tokyo-Harijuku_10.jpeg", "24hr-Tokyo-Harijuku_11.jpeg", "24hr-Tokyo-Harijuku_12.jpeg", "24hr-Tokyo-Harijuku_13.jpeg", "24hr-Tokyo-Harijuku_14.jpeg", "24hr-Tokyo-Harijuku_15.jpeg", "24hr-Tokyo-Harijuku_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Tokyo-Mix", "name": "Tokyo Mix", "images": ["24hr-Tokyo-Mix_1.jpeg", "24hr-Tokyo-Mix_2.jpeg", "24hr-Tokyo-Mix_3.jpeg", "24hr-Tokyo-Mix_4.jpeg", "24hr-Tokyo-Mix_5.jpeg", "24hr-Tokyo-Mix_6.jpeg", "24hr-Tokyo-Mix_7.jpeg", "24hr-Tokyo-Mix_8.jpeg", "24hr-Tokyo-Mix_9.jpeg", "24hr-Tokyo-Mix_10.jpeg", "24hr-Tokyo-Mix_11.jpeg", "24hr-Tokyo-Mix_12.jpeg", "24hr-Tokyo-Mix_13.jpeg", "24hr-Tokyo-Mix_14.jpeg", "24hr-Tokyo-Mix_15.jpeg", "24hr-Tokyo-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Venice-1-Mix", "name": "Venice 1 Mix", "images": ["24hr-Venice-1-Mix_1.jpeg", "24hr-Venice-1-Mix_2.jpeg", "24hr-Venice-1-Mix_3.jpeg", "24hr-Venice-1-Mix_4.jpeg", "24hr-Venice-1-Mix_5.jpeg", "24hr-Venice-1-Mix_6.jpeg", "24hr-Venice-1-Mix_7.jpeg", "24hr-Venice-1-Mix_8.jpeg", "24hr-Venice-1-Mix_9.jpeg", "24hr-Venice-1-Mix_10.jpeg", "24hr-Venice-1-Mix_11.jpeg", "24hr-Venice-1-Mix_12.jpeg", "24hr-Venice-1-Mix_13.jpeg", "24hr-Venice-1-Mix_14.jpeg", "24hr-Venice-1-Mix_15.jpeg", "24hr-Venice-1-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-VeryLargeArray", "name": "Very Large Array (VLA)", "images": ["24hr-VeryLargeArray_1.jpeg", "24hr-VeryLargeArray_2.jpeg", "24hr-VeryLargeArray_3.jpeg", "24hr-VeryLargeArray_4.jpeg", "24hr-VeryLargeArray_5.jpeg", "24hr-VeryLargeArray_6.jpeg", "24hr-VeryLargeArray_7.jpeg", "24hr-VeryLargeArray_8.jpeg", "24hr-VeryLargeArray_9.jpeg", "24hr-VeryLargeArray_10.jpeg", "24hr-VeryLargeArray_11.jpeg", "24hr-VeryLargeArray_12.jpeg", "24hr-VeryLargeArray_13.jpeg", "24hr-VeryLargeArray_14.jpeg", "24hr-VeryLargeArray_15.jpeg", "24hr-VeryLargeArray_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Washington-Methow-River", "name": "Washington Methow River", "images": ["24hr-Washington-Methow-River_1.jpeg", "24hr-Washington-Methow-River_2.jpeg", "24hr-Washington-Methow-River_3.jpeg", "24hr-Washington-Methow-River_4.jpeg", "24hr-Washington-Methow-River_5.jpeg", "24hr-Washington-Methow-River_6.jpeg", "24hr-Washington-Methow-River_7.jpeg", "24hr-Washington-Methow-River_8.jpeg", "24hr-Washington-Methow-River_9.jpeg", "24hr-Washington-Methow-River_10.jpeg", "24hr-Washington-Methow-River_11.jpeg", "24hr-Washington-Methow-River_12.jpeg", "24hr-Washington-Methow-River_13.jpeg", "24hr-Washington-Methow-River_14.jpeg", "24hr-Washington-Methow-River_15.jpeg", "24hr-Washington-Methow-River_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Washington-Methow-Valley", "name": "Washington Methow Valley", "images": ["24hr-Washington-Methow-Valley_1.jpeg", "24hr-Washington-Methow-Valley_2.jpeg", "24hr-Washington-Methow-Valley_3.jpeg", "24hr-Washington-Methow-Valley_4.jpeg", "24hr-Washington-Methow-Valley_5.jpeg", "24hr-Washington-Methow-Valley_6.jpeg", "24hr-Washington-Methow-Valley_7.jpeg", "24hr-Washington-Methow-Valley_8.jpeg", "24hr-Washington-Methow-Valley_9.jpeg", "24hr-Washington-Methow-Valley_10.jpeg", "24hr-Washington-Methow-Valley_11.jpeg", "24hr-Washington-Methow-Valley_12.jpeg", "24hr-Washington-Methow-Valley_13.jpeg", "24hr-Washington-Methow-Valley_14.jpeg", "24hr-Washington-Methow-Valley_15.jpeg", "24hr-Washington-Methow-Valley_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-WashingtonMonument", "name": "Washington Monument", "images": ["24hr-WashingtonMonument_1.jpeg", "24hr-WashingtonMonument_2.jpeg", "24hr-WashingtonMonument_3.jpeg", "24hr-WashingtonMonument_4.jpeg", "24hr-WashingtonMonument_5.jpeg", "24hr-WashingtonMonument_6.jpeg", "24hr-WashingtonMonument_7.jpeg", "24hr-WashingtonMonument_8.jpeg", "24hr-WashingtonMonument_9.jpeg", "24hr-WashingtonMonument_10.jpeg", "24hr-WashingtonMonument_11.jpeg", "24hr-WashingtonMonument_12.jpeg", "24hr-WashingtonMonument_13.jpeg", "24hr-WashingtonMonument_14.jpeg", "24hr-WashingtonMonument_15.jpeg", "24hr-WashingtonMonument_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-WhiteSands-1", "name": "White Sands #1", "images": ["24hr-WhiteSands-1_1.jpeg", "24hr-WhiteSands-1_2.jpeg", "24hr-WhiteSands-1_3.jpeg", "24hr-WhiteSands-1_4.jpeg", "24hr-WhiteSands-1_5.jpeg", "24hr-WhiteSands-1_6.jpeg", "24hr-WhiteSands-1_7.jpeg", "24hr-WhiteSands-1_8.jpeg", "24hr-WhiteSands-1_9.jpeg", "24hr-WhiteSands-1_10.jpeg", "24hr-WhiteSands-1_11.jpeg", "24hr-WhiteSands-1_12.jpeg", "24hr-WhiteSands-1_13.jpeg", "24hr-WhiteSands-1_14.jpeg", "24hr-WhiteSands-1_15.jpeg", "24hr-WhiteSands-1_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-WhiteSands-2", "name": "White Sands #2", "images": ["24hr-WhiteSands-2_1.jpeg", "24hr-WhiteSands-2_2.jpeg", "24hr-WhiteSands-2_3.jpeg", "24hr-WhiteSands-2_4.jpeg", "24hr-WhiteSands-2_5.jpeg", "24hr-WhiteSands-2_6.jpeg", "24hr-WhiteSands-2_7.jpeg", "24hr-WhiteSands-2_8.jpeg", "24hr-WhiteSands-2_9.jpeg", "24hr-WhiteSands-2_10.jpeg", "24hr-WhiteSands-2_11.jpeg", "24hr-WhiteSands-2_12.jpeg", "24hr-WhiteSands-2_13.jpeg", "24hr-WhiteSands-2_14.jpeg", "24hr-WhiteSands-2_15.jpeg", "24hr-WhiteSands-2_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Yosemite-2-Mix", "name": "Yosemite 2 Mix", "images": ["24hr-Yosemite-2-Mix_1.jpeg", "24hr-Yosemite-2-Mix_2.jpeg", "24hr-Yosemite-2-Mix_3.jpeg", "24hr-Yosemite-2-Mix_4.jpeg", "24hr-Yosemite-2-Mix_5.jpeg", "24hr-Yosemite-2-Mix_6.jpeg", "24hr-Yosemite-2-Mix_7.jpeg", "24hr-Yosemite-2-Mix_8.jpeg", "24hr-Yosemite-2-Mix_9.jpeg", "24hr-Yosemite-2-Mix_10.jpeg", "24hr-Yosemite-2-Mix_11.jpeg", "24hr-Yosemite-2-Mix_12.jpeg", "24hr-Yosemite-2-Mix_13.jpeg", "24hr-Yosemite-2-Mix_14.jpeg", "24hr-Yosemite-2-Mix_15.jpeg", "24hr-Yosemite-2-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Yosemite-Mix", "name": "Yosemite Mix", "images": ["24hr-Yosemite-Mix_1.jpeg", "24hr-Yosemite-Mix_2.jpeg", "24hr-Yosemite-Mix_3.jpeg", "24hr-Yosemite-Mix_4.jpeg", "24hr-Yosemite-Mix_5.jpeg", "24hr-Yosemite-Mix_6.jpeg", "24hr-Yosemite-Mix_7.jpeg", "24hr-Yosemite-Mix_8.jpeg", "24hr-Yosemite-Mix_9.jpeg", "24hr-Yosemite-Mix_10.jpeg", "24hr-Yosemite-Mix_11.jpeg", "24hr-Yosemite-Mix_12.jpeg", "24hr-Yosemite-Mix_13.jpeg", "24hr-Yosemite-Mix_14.jpeg", "24hr-Yosemite-Mix_15.jpeg", "24hr-Yosemite-Mix_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-YosemiteLukens", "name": "Yosemite Lukens Lake", "images": ["24hr-YosemiteLukens_1.jpeg", "24hr-YosemiteLukens_2.jpeg", "24hr-YosemiteLukens_3.jpeg", "24hr-YosemiteLukens_4.jpeg", "24hr-YosemiteLukens_5.jpeg", "24hr-YosemiteLukens_6.jpeg", "24hr-YosemiteLukens_7.jpeg", "24hr-YosemiteLukens_8.jpeg", "24hr-YosemiteLukens_9.jpeg", "24hr-YosemiteLukens_10.jpeg", "24hr-YosemiteLukens_11.jpeg", "24hr-YosemiteLukens_12.jpeg", "24hr-YosemiteLukens_13.jpeg", "24hr-YosemiteLukens_14.jpeg", "24hr-YosemiteLukens_15.jpeg", "24hr-YosemiteLukens_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-YosemiteTioga", "name": "Yosemite Tioga Road", "images": ["24hr-YosemiteTioga_1.jpeg", "24hr-YosemiteTioga_2.jpeg", "24hr-YosemiteTioga_3.jpeg", "24hr-YosemiteTioga_4.jpeg", "24hr-YosemiteTioga_5.jpeg", "24hr-YosemiteTioga_6.jpeg", "24hr-YosemiteTioga_7.jpeg", "24hr-YosemiteTioga_8.jpeg", "24hr-YosemiteTioga_9.jpeg", "24hr-YosemiteTioga_10.jpeg", "24hr-YosemiteTioga_11.jpeg", "24hr-YosemiteTioga_12.jpeg", "24hr-YosemiteTioga_13.jpeg", "24hr-YosemiteTioga_14.jpeg", "24hr-YosemiteTioga_15.jpeg", "24hr-YosemiteTioga_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Zhang-Jia-Jie-National-Park-2026", "name": "Zhang Jia Jie National Park 2026", "images": ["24hr-Zhang-Jia-Jie-National-Park-2026_1.jpeg", "24hr-Zhang-Jia-Jie-National-Park-2026_2.jpeg", "24hr-Zhang-Jia-Jie-National-Park-2026_3.jpeg", "24hr-Zhang-Jia-Jie-National-Park-2026_4.jpeg", "24hr-Zhang-Jia-Jie-National-Park-2026_5.jpeg", "24hr-Zhang-Jia-Jie-National-Park-2026_6.jpeg", "24hr-Zhang-Jia-Jie-National-Park-2026_7.jpeg", "24hr-Zhang-Jia-Jie-National-Park-2026_8.jpeg", "24hr-Zhang-Jia-Jie-National-Park-2026_9.jpeg", "24hr-Zhang-Jia-Jie-National-Park-2026_10.jpeg", "24hr-Zhang-Jia-Jie-National-Park-2026_11.jpeg", "24hr-Zhang-Jia-Jie-National-Park-2026_12.jpeg", "24hr-Zhang-Jia-Jie-National-Park-2026_13.jpeg", "24hr-Zhang-Jia-Jie-National-Park-2026_14.jpeg", "24hr-Zhang-Jia-Jie-National-Park-2026_15.jpeg", "24hr-Zhang-Jia-Jie-National-Park-2026_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}, {"folder": "24hr-Zigzag-Canyon", "name": "Zigzag Canyon", "images": ["24hr-Zigzag-Canyon_1.jpeg", "24hr-Zigzag-Canyon_2.jpeg", "24hr-Zigzag-Canyon_3.jpeg", "24hr-Zigzag-Canyon_4.jpeg", "24hr-Zigzag-Canyon_5.jpeg", "24hr-Zigzag-Canyon_6.jpeg", "24hr-Zigzag-Canyon_7.jpeg", "24hr-Zigzag-Canyon_8.jpeg", "24hr-Zigzag-Canyon_9.jpeg", "24hr-Zigzag-Canyon_10.jpeg", "24hr-Zigzag-Canyon_11.jpeg", "24hr-Zigzag-Canyon_12.jpeg", "24hr-Zigzag-Canyon_13.jpeg", "24hr-Zigzag-Canyon_14.jpeg", "24hr-Zigzag-Canyon_15.jpeg", "24hr-Zigzag-Canyon_16.jpeg"], "lists": {"sunrise": [2, 3, 4], "day": [5, 6, 7, 8, 9], "sunset": [10, 11, 12, 13], "night": [14, 15, 16, 1]}}];
+const BASE = "/home/admin/.var/app/top.spelunk.johona/data/johona/themes";
+
+// ── sun-segment windows for the day (America/Phoenix, from the C++ engine) ──
+// night 19:26:28 → 05:36:20 (wraps), sunrise 05:35:37 → 06:34:24,
+// day 06:34:24 → 18:27:41, sunset 18:27:41 → 19:26:28
+const SEG = {
+  sunrise: [5*3600+35*60+37, 6*3600+34*60+24],
+  day:     [6*3600+34*60+24, 18*3600+27*60+41],
+  sunset:  [18*3600+27*60+41, 19*3600+26*60+28],
+  night:   [19*3600+26*60+28, 24*3600 + 5*3600+36*60+20], // wraps midnight
+};
+const CATS = ["night", "sunrise", "day", "sunset"];
+const DAY = 24*3600;
+
+const state = {
+  theme: THEMES.find(t => t.folder === "24hr-AlabamaHills") || THEMES[0],
+  running: true,
+  slideIdx: 0,
+  pvFront: "a",
+};
+
+// ── helpers ───────────────────────────────────────────────────────────
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const imgPath = (t, f) => BASE + "/" + t.folder + "/" + f;
+const imgByValue = (t, v) => t.images.find(f => {
+  const m = f.match(/_(\d+)\./); return m && +m[1] === v;
+}) || t.images[0];
+const hhmm = s => {
+  s = Math.floor(s);
+  return String(Math.floor(s/3600) % 24).padStart(2,"0") + ":" + String(Math.floor(s/60) % 60).padStart(2,"0");
+};
+let statusTimer = null;
+function status(msg, ms = 5000) {
+  $("#statusmsg").textContent = msg;
+  clearTimeout(statusTimer);
+  if (ms > 0) statusTimer = setTimeout(() => $("#statusmsg").textContent = "Ready", ms);
+}
+
+// ── theme list ────────────────────────────────────────────────────────
+function buildList() {
+  const el = $("#themetelist");
+  el.innerHTML = "";
+  for (const t of THEMES) {
+    const d = document.createElement("div");
+    d.className = "tl-item" + (t === state.theme ? " selected" : "");
+    d.textContent = t.name;
+    d.dataset.folder = t.folder;
+    d.title = t.folder;
+    d.onclick = () => selectTheme(t);
+    el.appendChild(d);
+  }
+}
+function selectTheme(t) {
+  state.theme = t;
+  $$(".tl-item").forEach(d => d.classList.toggle("selected", d.dataset.folder === t.folder));
+  startSlideshow();
+  buildSchedule();
+  $("#pvinfo").textContent = t.images.length + " images";
+}
+
+// ── preview slideshow (2.7 s per frame, 1.2 s cross-fade) ─────────────
+let slideTimer = null;
+function startSlideshow() {
+  clearInterval(slideTimer);
+  state.slideIdx = 0;
+  const imgs = state.theme.images;
+  if (!imgs.length) return;
+  const show = i => {
+    const back = state.pvFront === "a" ? "b" : "a";
+    const el = $("#pv-" + back);
+    el.onload = () => {
+      el.classList.add("show");
+      $("#pv-" + state.pvFront).classList.remove("show");
+      state.pvFront = back;
+    };
+    el.src = imgPath(state.theme, imgs[i]);
+  };
+  show(0);
+  slideTimer = setInterval(() => { state.slideIdx = (state.slideIdx + 1) % imgs.length; show(state.slideIdx); }, 2700);
+}
+
+// ── schedule strip ────────────────────────────────────────────────────
+function buildRuler() {
+  const r = $("#ruler");
+  r.innerHTML = "";
+  const w = r.clientWidth || 800;
+  for (let h = 0; h <= 24; h++) {
+    const x = (h / 24) * w;
+    const t = document.createElement("div");
+    t.className = "tick " + (h % 3 === 0 ? "major" : "minor");
+    t.style.left = x + "px";
+    r.appendChild(t);
+    if (h % 3 === 0 && h < 24) {
+      const l = document.createElement("span");
+      l.className = "tick-label";
+      l.style.left = x + "px";
+      l.textContent = String(h).padStart(2, "0");
+      r.appendChild(l);
+    }
+  }
+}
+// per-image windows for a theme: split each category span evenly
+function imageWindows(t) {
+  const wins = [];
+  for (const cat of CATS) {
+    const list = (t.lists[cat] || []);
+    if (!list.length) continue;
+    const [a, b] = SEG[cat];
+    const span = b - a;
+    list.forEach((v, i) => {
+      wins.push({
+        cat, start: a + span * i / list.length, end: a + span * (i + 1) / list.length,
+        value: v, file: imgByValue(t, v),
+      });
+    });
+  }
+  return wins;
+}
+function buildSchedule() {
+  const strip = $("#strip");
+  strip.innerHTML = "";
+  const w = strip.clientWidth || 800;
+  const x = s => (s / DAY) * w;
+  for (const win of imageWindows(state.theme)) {
+    // clip windows that wrap midnight into [0, DAY)
+    let s = win.start, e = win.end;
+    const parts = [];
+    if (e > DAY) { parts.push([s, DAY]); parts.push([0, e - DAY]); }
+    else parts.push([s, e]);
+    for (const [s0, e0] of parts) {
+      const x0 = x(s0), x1 = x(e0);
+      if (x1 - x0 < 1) continue;
+      const d = document.createElement("div");
+      d.className = "seg " + win.cat;
+      d.style.left = (x0 + 1) + "px";
+      d.style.width = Math.max(1, x1 - x0 - 3) + "px";
+      const full = hhmm(win.start % DAY) + "–" + hhmm(win.end % DAY);
+      if (x1 - x0 > 104) {
+        const im = document.createElement("img");
+        im.src = imgPath(state.theme, win.file);
+        im.loading = "lazy";
+        d.appendChild(im);
+        const sp = document.createElement("span");
+        sp.className = "t";
+        sp.textContent = full;
+        d.appendChild(sp);
+      } else if (x1 - x0 > 40) {
+        const im = document.createElement("img");
+        im.src = imgPath(state.theme, win.file);
+        im.loading = "lazy";
+        d.appendChild(im);
+      }
+      d.title = full + "  ·  image " + win.value;
+      strip.appendChild(d);
+    }
+  }
+  buildRuler();
+  updateMarker();
+}
+
+// current time in America/Phoenix (seconds since local midnight)
+function phoenixNow() {
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "America/Phoenix", hour: "2-digit", minute: "2-digit",
+    second: "2-digit", hour12: false,
+  }).formatToParts(now);
+  const g = t => +parts.find(p => p.type === t).value;
+  return (g("hour") % 24) * 3600 + g("minute") * 60 + g("second");
+}
+function updateMarker() {
+  const s = phoenixNow();
+  const bar = $("#schedbar");
+  const w = bar.clientWidth || 800;
+  const mx = (s / DAY) * w;
+  const m = $("#marker");
+  m.style.left = mx + "px";
+  const chip = $("#chip");
+  chip.textContent = hhmm(s);
+  const tw = chip.offsetWidth || 40;
+  chip.style.left = (mx + 7 + tw < w ? 7 : -(7 + tw)) + "px";
+  // footer: window containing now
+  const foot = $("#schedfoot");
+  const wins = imageWindows(state.theme);
+  let cur = null;
+  for (const win of wins) {
+    let a = win.start, b = win.end;
+    if (b > DAY && s < b - DAY) { cur = win; break; }
+    if (s >= a && s < b) { cur = win; break; }
+  }
+  if (cur)
+    foot.textContent = "Now: " + hhmm(cur.start % DAY) + "–" + hhmm(cur.end % DAY) +
+      "  ·  image " + cur.value + "  ·  " + cur.file;
+  else
+    foot.textContent = "";
+}
+
+// ── scheduler state ───────────────────────────────────────────────────
+function setRunning(run) {
+  state.running = run;
+  $("#bigstatus").textContent = run ? "Running" : "Stopped";
+  $("#bigstatus").classList.toggle("running", run);
+  $("#btn-delete").disabled = run;
+  $("#deletewarn").style.display = run ? "block" : "none";
+  $$("#dd-sched .dd-item")[0].classList.toggle("disabled", run);
+  $$("#dd-sched .dd-item")[1].classList.toggle("disabled", !run);
+  logLine(run ? "Scheduler started" : "Scheduler stopped");
+  status(run ? "Scheduler started" : "Scheduler stopped");
+}
+function logLine(msg) {
+  const t = new Date().toLocaleTimeString("en-US", { hour12: true });
+  const el = document.createElement("div");
+  el.textContent = "[" + t + "]  " + msg;
+  const log = $("#log");
+  log.appendChild(el);
+  log.scrollTop = log.scrollHeight;
+}
+function seedLog() {
+  const lines = [
+    "Backend: gnome (gsettings)",
+    "Applied: Alabama Hills (day, image 7)",
+    "Wallpaper already current (24hr-AlabamaHills_7.jpeg)",
+  ];
+  lines.forEach(l => logLine(l));
+}
+
+// ── modal ─────────────────────────────────────────────────────────────
+function modal(title, body, buttons, onPick) {
+  $("#m-title").textContent = title;
+  $("#m-body").textContent = body;
+  const bb = $("#m-btns");
+  bb.innerHTML = "";
+  for (const [label, val] of buttons) {
+    const b = document.createElement("button");
+    b.className = "qbtn";
+    b.textContent = label;
+    b.onclick = () => { $("#modal-back").classList.remove("open"); if (onPick) onPick(val); };
+    bb.appendChild(b);
+  }
+  $("#modal-back").classList.add("open");
+}
+
+// ── actions ───────────────────────────────────────────────────────────
+function doApply() {
+  const t = state.theme;
+  const ask = () => {
+    status("Applied: " + t.name, 5000);
+    modal("Wallpaper Applied", "Applied: " + t.name, [["OK", 0]]);
+    logLine("Applied: " + t.name);
+  };
+  // daily shuffle is enabled in this mockup → confirm, like kWallpaper
+  modal("Confirm Theme Apply",
+    "Daily shuffle is enabled. If you apply this theme, a new shuffle list will be created. Continue?",
+    [["Yes", 1], ["No", 0]], v => { if (v === 1) ask(); });
+}
+function doDelete() {
+  const t = state.theme;
+  modal("Delete theme",
+    "Delete theme \u201C" + t.name + "\u201D and all of its images?",
+    [["Yes", 1], ["No", 0]], v => {
+      if (v === 1) { status("Theme deleted"); logLine("Deleted theme: " + t.name); }
+    });
+}
+function doImport() { status("Choose a .ddw or .zip theme file…"); }
+function doAbout() {
+  modal("About Johona Wallpaper",
+    "Johona Wallpaper\nVersion 1.0.0\n\nDynamic wallpaper manager for Linux (Flatpak).\nChanges wallpapers based on time of day using\nsunrise / sunset calculations.",
+    [["OK", 0]]);
+}
+
+// ── wiring ────────────────────────────────────────────────────────────
+$$(".tab").forEach(tb => tb.onclick = () => {
+  $$(".tab").forEach(x => x.classList.remove("active"));
+  tb.classList.add("active");
+  $$(".tabpage").forEach(p => p.classList.remove("active"));
+  $("#tab-" + tb.dataset.tab).classList.add("active");
+  if (tb.dataset.tab === "themes") buildRuler();
+});
+$$(".menu").forEach(m => m.onclick = e => {
+  e.stopPropagation();
+  const dd = $("#dd-" + m.dataset.menu);
+  const wasOpen = dd.classList.contains("open");
+  $$(".dropdown").forEach(d => d.classList.remove("open"));
+  $$(".menu").forEach(x => x.classList.remove("open"));
+  if (!wasOpen) { dd.classList.add("open"); m.classList.add("open"); }
+});
+document.addEventListener("click", () => {
+  $$(".dropdown").forEach(d => d.classList.remove("open"));
+  $$(".menu").forEach(x => x.classList.remove("open"));
+});
+$$(".dd-item").forEach(it => it.onclick = e => {
+  e.stopPropagation();
+  if (it.classList.contains("disabled")) return;
+  const a = it.dataset.act;
+  if (a === "import") doImport();
+  else if (a === "quit") status("Quit (mockup)");
+  else if (a === "sched-start") setRunning(true);
+  else if (a === "sched-stop") setRunning(false);
+  else if (a === "about") doAbout();
+});
+$("#btn-import").onclick = doImport;
+$("#btn-apply").onclick = doApply;
+$("#btn-delete").onclick = doDelete;
+$("#btn-start").onclick = () => setRunning(true);
+$("#btn-stop").onclick = () => setRunning(false);
+$("#btn-save").onclick = () => status("Settings saved", 4000);
+$("#btn-detect").onclick = () => status("Location detected — review and press Save to apply", 6000);
+$$("[data-cbx]").forEach(c => c.onclick = () => c.classList.toggle("on"));
+window.addEventListener("resize", () => { buildRuler(); });
+
+// ── init ──────────────────────────────────────────────────────────────
+buildList();
+selectTheme(state.theme);
+setRunning(true);
+seedLog();
+setInterval(updateMarker, 1000);
+// open a specific tab via URL hash (#settings / #scheduler)
+if (location.hash) {
+  const t = location.hash.slice(1);
+  const tab = $(".tab[data-tab='" + t + "']");
+  if (tab) tab.click();
+}
+</script>
+</body>
+</html>

@@ -50,6 +50,9 @@ int main(int argc, char** argv) {
     QCoreApplication::setOrganizationName(QStringLiteral("spelunk"));
     QCoreApplication::setApplicationName(QStringLiteral("johona"));
     QCoreApplication::setApplicationVersion(QStringLiteral("1.0.0"));
+    QGuiApplication::setDesktopFileName(QStringLiteral("top.spelunk.johona"));
+    // Closing the window hides to the tray; only Quit exits.
+    QApplication::setQuitOnLastWindowClosed(false);
 
     QCommandLineParser parser;
     parser.setApplicationDescription(QStringLiteral("Johona Wallpaper"));
