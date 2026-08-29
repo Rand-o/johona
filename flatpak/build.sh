@@ -51,6 +51,16 @@ main() {
         --user \
         "$BUILD_DIR/app" "$MANIFEST"
 
+    # flatpak-builder's --user install step can silently no-op in
+    # non-interactive contexts; verify and install explicitly if needed.
+    if ! flatpak info --user "$APP_ID" >/dev/null 2>&1; then
+        echo "==> installing to --user installation"
+        local remote="johona-local"
+        flatpak remote-add --user --if-not-exists --no-gpg-verify \
+            "$remote" "file://$PWD/$BUILD_DIR/repo"
+        flatpak install --user --noninteractive "$remote" "$APP_ID"
+    fi
+
     echo
     echo "Installed. Run with:  flatpak run $APP_ID"
 

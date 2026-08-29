@@ -82,6 +82,7 @@ private slots:
     void backendFailure_retriesOnce();
     void backendFailure_defersToSafetyTick();
     void safetyTick_noop();
+    void cycleDisabled_skipsSafetyTick();
     void nextChange_valid();
     void startStop();
 
@@ -312,6 +313,33 @@ void TestEngine::safetyTick_noop() {
     // (spec §6: "otherwise no-op. No re-apply").
     engine->runSafetyTick();
     QCOMPARE(mock.setCalls(), sets);
+}
+
+void TestEngine::cycleDisabled_skipsSafetyTick() {
+    resetState();
+    makeTheme("solar");
+    const QDateTime fixedNow(QDate(2013, 3, 5), QTime(12, 0),
+                            QTimeZone("America/Phoenix"));
+    MockRun mock;
+    mock.setFailuresRemaining = 1000;  // always fails
+    auto engine = makeEngine(&mock, fixedNow);
+
+    // 1 s safety interval, cycle task disabled.
+    config::Config cfg = engine->config();
+    cfg.safetyInterval = 1;
+    cfg.cycleEnabled = false;
+    engine->setConfig(cfg);
+
+    engine->start();
+    // Initial apply fails (mock always fails): attempt + one retry.
+    QCOMPARE(mock.setCalls(), 2);
+
+    // Wait past the safety interval: with the cycle task enabled the
+    // pending failure would be retried here; disabled → no retry.
+    QTest::qWait(1500);
+    QCOMPARE(mock.setCalls(), 2);
+
+    engine->stop();
 }
 
 void TestEngine::nextChange_valid() {
