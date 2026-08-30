@@ -1,7 +1,8 @@
-// settstab.hpp — Settings tab (kWallpaper SettingsPage parity + the
-// Johona backend-override group): scheduler, location, wallpaper backend,
-// appearance.  Save → atomic config write + hot-reload of the running
-// engine.  The color scheme and autostart apply immediately (kWallpaper).
+// settstab.hpp — Settings page (redesign mockup): card-based layout
+// (Scheduler / Location / Wallpaper backend / Appearance) with switch
+// rows, a 660 px scrollable column, and Revert/Save in the header.
+// Save → atomic config write + hot-reload of the running engine. The
+// color scheme and autostart apply immediately (kWallpaper parity).
 
 #pragma once
 
@@ -45,15 +46,17 @@ private slots:
 
 private:
     config::Config collect() const;
+    void updateBackendHint();
 
     Engine* m_engine;
     location::LocationManager* m_location;
 
     // Scheduler
     QSpinBox* m_interval;
-    QCheckBox* m_runCycle;
-    QCheckBox* m_dailyShuffle;
-    QCheckBox* m_startOnLaunch;
+    class ToggleSwitch* m_runCycle;
+    class ToggleSwitch* m_dailyShuffle;
+    class ToggleSwitch* m_startOnLaunch;
+    class ToggleSwitch* m_autostart;
 
     // Location
     QLineEdit* m_timezone;
@@ -63,12 +66,15 @@ private:
 
     // Wallpaper backend (Johona)
     QComboBox* m_backend;
+    QLabel* m_backendHint;
 
     // Appearance
-    QCheckBox* m_autostart;
-    QComboBox* m_scheme;
+    class SchemeCard* m_schemeSys;
+    class SchemeCard* m_schemeLight;
+    class SchemeCard* m_schemeDark;
 
     QPushButton* m_saveBtn;
+    int m_backendToken = 0;
 };
 
 }  // namespace johona::gui

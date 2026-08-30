@@ -2,163 +2,308 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Johona Wallpaper — GUI mockup</title>
+<title>Johona Wallpaper — Plasma 6.7 mockup</title>
 <style>
-:root {
-  --menubar: #313437;
-  --tabbar: #202326;
-  --content: #202326;
-  --list: #1d1f22;
-  --list-alt: #141618;
-  --text: #fcfcfc;
-  --text-dim: #b0b1b2;
-  --placeholder: #7c7d7f;
-  --sel: #84579f;
-  --sel-grad1: #936aac;
-  --sel-grad2: #774e90;
-  --tab-active: #383b3f;
-  --tab-inactive: #333539;
-  --border: #17191b;
-  --border-ctrl: #5a5d60;
-  --group-border: #3a3d40;
-  --lineedit: #16181a;
-  --spinbox: #222528;
-  --btn: #4a4b4d;
-  --btn-hi: #55575a;
-  --btn-border: #5f6164;
-  --strip: #373a3d;
-  --red: #d50314;
-  --chip-bg: #303336;
-  --seg-night-f: rgba(85,102,136,.133);  --seg-night-b: rgba(85,102,136,.35);
-  --seg-sunrise-f: rgba(245,194,107,.17); --seg-sunrise-b: rgba(245,194,107,.4);
-  --seg-day-f: rgba(126,200,240,.133);   --seg-day-b: rgba(126,200,240,.35);
-  --seg-sunset-f: rgba(240,149,90,.17);  --seg-sunset-b: rgba(240,149,90,.4);
+/* ═══════════════════════════════════════════════════════════════════════
+   Breeze 6.7 design tokens — extracted from the real sources:
+   • breeze-6.7.0/kstyle (breezemetrics.h, breezehelper.cpp, breezestyle.cpp)
+   • breeze-6.7.0/colors/BreezeLight.colors, BreezeDark.colors (contrast=4
+     → frameIntensityBias 0.4, Blend_Value 0.3)
+   • breeze-6.7.0/kdecoration (KWin Breeze: 5px window radius, 40px title
+     bar, 32px buttons, chevron min/max glyphs)
+   ═══════════════════════════════════════════════════════════════════════ */
+:root, body[data-theme="light"] {
+  --window:        #eff0f1;
+  --window-text:   #232629;
+  --base:          #ffffff;
+  --alt-base:      #f7f7f7;
+  --button:        #fcfcfc;
+  --button-text:   #232629;
+  --highlight:     #3daee9;
+  --highlight-text:#ffffff;
+  --link:          #2980b9;
+  --red:           #da4453;
+  --orange:        #f67400;
+  --green:         #27ae60;
+  --tooltip-bg:    #f7f7f7;
+  --placeholder:   #80848a;
+  --disabled:      #a0a1a3;
+  --mid:           #b8babd;
+  --midlight:      #c8cbce;
+  --separator:     #b8babd;
+  /* mix(Window, WindowText, 0.4) */
+  --frame-outline: #9d9fa1;
+  /* mix(Window, Base, 0.3) */
+  --frame-bg:      #f3f4f5;
+  /* mix(Button, ButtonText, 0.4) */
+  --btn-border:    #b0b2b4;
+  /* mix(Button, Highlight, .15/.3/.2) */
+  --btn-hover:     #e5f2fb;
+  --btn-pressed:   #c9e6f7;
+  --btn-default:   #d7ebf9;
+  /* Window.darker(120) */
+  --tab-inactive:  #c7c8c9;
+  /* [WM] activeBackground / activeForeground */
+  --titlebar:      #e3e5e7;
+  --titlebar-text: #232629;
+  --titlebar-inactive-text: #707b8a;
+  --menu-bg:       #f3f4f5;
+  --menu-hover:    rgba(61,174,233,.3);
+  --close-hover:   #ff5264;   /* red.lighter() */
+  --close-pressed: #b63945;   /* red.darker()  */
+  --shadow: 0 12px 32px rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.22);
+  --desk: linear-gradient(160deg, #2a3d52 0%, #1c2a3a 55%, #16202c 100%);
+}
+body[data-theme="dark"] {
+  --window:        #202326;
+  --window-text:   #fcfcfc;
+  --base:          #141618;
+  --alt-base:      #1d1f22;
+  --button:        #292c30;
+  --button-text:   #fcfcfc;
+  --highlight:     #3daee9;
+  --highlight-text:#fcfcfc;
+  --link:          #1d99f3;
+  --red:           #da4453;
+  --orange:        #f67400;
+  --green:         #27ae60;
+  --tooltip-bg:    #292c30;
+  --placeholder:   #8e9297;
+  --disabled:      #6e7174;
+  --mid:           #4d5154;
+  --midlight:      #54585c;
+  --separator:     #54585c;
+  --frame-outline: #787a7b;
+  --frame-bg:      #1c1f22;
+  --btn-border:    #8b8d8f;
+  --btn-hover:     #33414d;
+  --btn-pressed:   #3a5266;
+  --btn-default:   #36495a;
+  --tab-inactive:  #1b1d20;
+  --titlebar:      #272c31;
+  --titlebar-text: #fcfcfc;
+  --titlebar-inactive-text: #a1a9b1;
+  --menu-bg:       #1c1f22;
+  --menu-hover:    rgba(61,174,233,.3);
+  --close-hover:   #da4453;
+  --close-pressed: #b63945;
+  --shadow: 0 12px 32px rgba(0,0,0,.6), 0 2px 8px rgba(0,0,0,.45);
+  --desk: linear-gradient(160deg, #1a2230 0%, #121822 55%, #0d1219 100%);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
 body {
-  background: #101214;
+  background: var(--desk);
   display: flex; align-items: center; justify-content: center;
   font-family: "Noto Sans", "DejaVu Sans", sans-serif;
-  font-size: 13px; color: var(--text);
+  font-size: 13px; color: var(--window-text);
+  -webkit-font-smoothing: antialiased;
 }
-#stage { position: relative; }
+#stage { position: relative; padding-bottom: 44px; }
+
+/* ── KWin Breeze window frame ─────────────────────────────────────────── */
 #win {
   width: 1200px; height: 700px;
-  background: var(--content);
+  background: var(--window);
   display: flex; flex-direction: column;
-  border: 1px solid #000;
-  box-shadow: 0 12px 40px rgba(0,0,0,.6);
+  border-radius: 5px;
+  box-shadow: var(--shadow);
   overflow: hidden;
+  position: relative;
 }
-/* ── title bar (host WM decoration, for reference) ─────────────────── */
+#win::after {  /* 1px frame outline around the whole window (KWin border) */
+  content: ""; position: absolute; inset: 0; border-radius: 5px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.28); pointer-events: none; z-index: 90;
+}
+body[data-theme="dark"] #win::after { box-shadow: inset 0 0 0 1px rgba(0,0,0,.55); }
+
+/* ── unified title bar (KTitleWidget + KWin Breeze buttons) ───────────── */
 #titlebar {
-  height: 30px; background: #26282b; flex: none;
+  height: 40px; flex: none; background: var(--titlebar);
+  display: flex; align-items: center; user-select: none; position: relative; z-index: 40;
+}
+.tb-left { display: flex; align-items: center; height: 100%; padding-left: 10px; }
+.tb-icon { width: 22px; height: 22px; flex: none; display: flex; align-items: center; justify-content: center; }
+.tb-icon svg { width: 22px; height: 22px; }
+.tb-title {
+  font-size: 13px; color: var(--titlebar-text);
+  margin: 0 10px 0 8px; white-space: nowrap;
+}
+.tb-btn {
+  width: 32px; height: 32px; flex: none; border: none; background: none;
   display: flex; align-items: center; justify-content: center;
-  position: relative; font-size: 12.5px; color: #d8d9da;
-  user-select: none;
+  cursor: default; position: relative; color: var(--titlebar-text);
 }
-#titlebar .tb-btns { position: absolute; right: 6px; top: 0; height: 100%; display: flex; }
-#titlebar .tb-btn {
-  width: 34px; height: 100%; display: flex; align-items: center; justify-content: center;
-  color: #9a9b9d; font-size: 13px;
+.tb-btn svg { width: 20px; height: 20px; display: block; }
+.tb-btn .halo {
+  position: absolute; inset: 7px; border-radius: 50%;
+  background: var(--titlebar-text); opacity: 0; transition: opacity .12s;
 }
-#titlebar .tb-btn:hover { background: #3a3d40; }
-/* ── menu bar ───────────────────────────────────────────────────────── */
-#menubar {
-  height: 28px; background: var(--menubar); flex: none;
-  display: flex; align-items: stretch; user-select: none; position: relative; z-index: 50;
-}
-.menu {
-  display: flex; align-items: center; padding: 0 10px; cursor: default; color: #e6e7e8;
-}
-.menu:hover, .menu.open { background: #3d4043; }
-.menu u { text-decoration: none; border-bottom: 1px solid transparent; }
-/* dropdowns */
-.dropdown {
-  position: absolute; top: 28px; min-width: 190px;
-  background: #2a2d30; border: 1px solid var(--border-ctrl);
-  box-shadow: 0 6px 18px rgba(0,0,0,.5); display: none; z-index: 60;
-  padding: 3px 0;
-}
-.dropdown.open { display: block; }
-.dd-item {
-  display: flex; align-items: center; gap: 8px;
-  padding: 5px 18px 5px 10px; cursor: default; white-space: nowrap;
-}
-.dd-item:hover { background: var(--sel); }
-.dd-item .sc { margin-left: auto; color: #9a9b9d; font-size: 12px; padding-left: 24px; }
-.dd-item:hover .sc { color: #e8e0f0; }
-.dd-item.disabled { color: #6f7173; }
-.dd-item.disabled:hover { background: none; }
-.dd-sep { height: 1px; background: #45484b; margin: 3px 0; }
-.dd-item svg { width: 16px; height: 16px; flex: none; }
-/* ── tab bar ────────────────────────────────────────────────────────── */
+.tb-btn:hover .halo { opacity: 1; }
+.tb-btn:hover { color: var(--titlebar); }
+.tb-btn:active { color: var(--titlebar); }
+.tb-btn:active .halo { background: var(--btn-pressed); }
+.tb-close:hover .halo { background: var(--close-hover); }
+.tb-close:active .halo { background: var(--close-pressed); }
+.tb-right { margin-left: auto; display: flex; height: 100%; padding-right: 4px; align-items: center; }
+#menu-btn { margin-left: 6px; }
+
+/* ── body: tab bar + pane + status bar ────────────────────────────────── */
+#body { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+
+/* Breeze 6.7 tab bar: 4px top margin, 30px tabs, 8px spacing, min-width 80 */
 #tabbar {
-  height: 36px; background: var(--tabbar); flex: none;
-  display: flex; align-items: flex-end; padding: 0 4px; gap: 4px;
-  user-select: none;
+  flex: none; display: flex; align-items: flex-end;
+  padding: 4px 4px 0 4px; gap: 8px; user-select: none;
+  position: relative; z-index: 10;
 }
 .tab {
-  height: 30px; display: flex; align-items: center; gap: 7px;
+  height: 30px; min-width: 80px;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
   padding: 0 14px; background: var(--tab-inactive);
-  border: 1px solid var(--border); border-bottom: none;
-  border-radius: 4px 4px 0 0; color: #d8d9da; cursor: default; font-size: 13px;
+  border-radius: 5px 5px 0 0; color: var(--window-text);
+  cursor: default; font-size: 13px; position: relative;
 }
-.tab:hover { background: #383a3e; }
-.tab.active { background: var(--tab-active); color: var(--text); }
-.tab svg { width: 16px; height: 16px; }
-/* ── content ────────────────────────────────────────────────────────── */
-#content { flex: 1; position: relative; overflow: hidden; }
+.tab:hover { background: var(--btn-hover); }
+.tab.active {
+  background: var(--frame-bg);
+  border: 1px solid var(--frame-outline); border-bottom: none;
+  border-radius: 4.5px 4.5px 0 0;
+  margin-bottom: -1px; z-index: 2;
+}
+.tab.active::before {  /* 3px highlight bar (TabBar_ActiveEffectSize) */
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--highlight); border-radius: 4.5px 4.5px 0 0;
+}
+.tab svg { width: 16px; height: 16px; flex: none; color: var(--window-text); }
+
+/* pane (QTabWidget frame): 1px outline, frame-bg fill */
+#pane {
+  flex: 1; min-height: 0; display: flex; flex-direction: column;
+  border: 1px solid var(--frame-outline); border-top: none;
+  background: var(--frame-bg);
+  margin: 0 4px 0 4px;
+}
+#content { flex: 1; position: relative; min-height: 0; }
 .tabpage { position: absolute; inset: 0; display: none; }
 .tabpage.active { display: flex; }
-/* ── themes tab ─────────────────────────────────────────────────────── */
-#tab-themes { flex-direction: row; }
-#left {
-  width: 340px; flex: none; display: flex; flex-direction: column;
-  border-right: none;
+
+/* ── Breeze widgets ───────────────────────────────────────────────────── */
+.qbtn {
+  height: 28px; min-width: 24px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  background: var(--button);
+  border: 1px solid var(--btn-border); border-radius: 4.5px;
+  color: var(--button-text); font-size: 13px; font-family: inherit;
+  cursor: default; padding: 0 12px; white-space: nowrap;
 }
+.qbtn:hover:not(:disabled) { background: var(--btn-hover); }
+.qbtn:active:not(:disabled) { background: var(--btn-pressed); }
+.qbtn.default { background: var(--btn-default); border-color: var(--highlight); }
+.qbtn.default:hover:not(:disabled) { background: var(--btn-pressed); }
+.qbtn:disabled { color: var(--disabled); border-color: var(--mid); background: var(--button); }
+.qbtn svg { width: 16px; height: 16px; flex: none; }
+
+.led, .spin, .combo {
+  height: 28px; background: var(--base);
+  border: 1px solid var(--frame-outline); border-radius: 5px;
+  display: flex; align-items: center; padding: 0 8px;
+  font-size: 13px; color: var(--window-text); min-width: 0;
+}
+.led:focus-within, .spin:focus-within, .combo:focus-within { border-color: var(--highlight); }
+.led input {
+  background: none; border: none; outline: none; width: 100%;
+  font: inherit; color: var(--window-text);
+}
+.led input::placeholder { color: var(--placeholder); }
+
+.spin { padding: 0 2px 0 8px; }
+.spin .val { flex: 1; overflow: hidden; white-space: nowrap; }
+.spin .arrows { display: flex; flex-direction: column; gap: 1px; flex: none; }
+.spin .arrows button {
+  width: 18px; height: 11px; background: var(--button);
+  border: 1px solid var(--btn-border); color: var(--window-text);
+  font-size: 7px; line-height: 1; cursor: default; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.spin .arrows button:first-child { border-radius: 3px 3px 0 0; }
+.spin .arrows button:last-child { border-radius: 0 0 3px 3px; }
+.spin .arrows button:hover { background: var(--btn-hover); }
+
+.combo { padding-right: 2px; cursor: default; }
+.combo .cval { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.combo .cbtn {
+  width: 22px; height: 24px; flex: none; border: 1px solid var(--btn-border);
+  border-radius: 3px; background: var(--button); color: var(--window-text);
+  display: flex; align-items: center; justify-content: center;
+}
+.combo .cbtn:hover { background: var(--btn-hover); }
+.combo .cbtn svg { width: 12px; height: 12px; }
+
+/* Breeze 6.7 checkbox: 16px box, 4px radius, checked = 30% highlight fill */
+.cbx { display: flex; align-items: center; gap: 8px; cursor: default; font-size: 13px; color: var(--window-text); }
+.cbx .box {
+  width: 16px; height: 16px; flex: none; background: var(--button);
+  border: 1px solid var(--separator); border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+}
+.cbx .box svg { width: 12px; height: 12px; display: none; }
+.cbx.on .box { background: var(--menu-hover); border-color: var(--highlight); }
+.cbx.on .box svg { display: block; }
+
+.group {
+  border: 1px solid var(--frame-outline); border-radius: 4.5px;
+  padding: 16px 14px 12px 14px; position: relative; background: transparent;
+}
+.group > .gtitle {
+  position: absolute; top: -9px; left: 10px; background: var(--frame-bg);
+  padding: 0 5px; font-size: 13px; color: var(--window-text);
+}
+.frow { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.frow:first-of-type { margin-top: 2px; }
+.frow label.fl { width: 108px; flex: none; font-size: 13px; color: var(--window-text); white-space: nowrap; }
+.hint { font-size: 12px; color: var(--placeholder); line-height: 1.4; }
+
+/* ── themes tab ───────────────────────────────────────────────────────── */
+#tab-themes { flex-direction: row; }
+#left { width: 340px; flex: none; display: flex; flex-direction: column; padding: 8px 0 8px 8px; }
 #themetelist {
-  flex: 1; background: var(--list); overflow-y: auto;
-  border: 1px solid var(--border); border-right: none;
+  flex: 1; background: var(--base); overflow-y: auto;
+  border: 1px solid var(--frame-outline); border-radius: 4.5px;
+  position: relative; min-height: 0;
 }
 #themetelist::-webkit-scrollbar { width: 10px; }
-#themetelist::-webkit-scrollbar-track { background: var(--list-alt); }
-#themetelist::-webkit-scrollbar-thumb { background: #4a4d50; border-radius: 5px; }
+#themetelist::-webkit-scrollbar-track { background: var(--base); }
+#themetelist::-webkit-scrollbar-thumb { background: var(--mid); border-radius: 5px; border: 2px solid var(--base); }
 .tl-item {
-  height: 17px; line-height: 17px; padding: 0 6px; font-size: 12px;
-  color: var(--text); cursor: default; white-space: nowrap; overflow: hidden;
-  text-overflow: ellipsis;
+  height: 22px; line-height: 20px; padding: 0 8px; font-size: 13px;
+  color: var(--window-text); cursor: default; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; position: relative;
 }
-.tl-item:nth-child(odd) { background: var(--list); }
-.tl-item:nth-child(even) { background: var(--list-alt); }
-.tl-item:hover { background: #26292c; }
-.tl-item.selected { background: linear-gradient(180deg, var(--sel-grad1), var(--sel-grad2)); }
-#btnrow { display: flex; gap: 6px; padding: 6px 0 0 0; }
-#btnrow .spacer { flex: 1; }
-.qbtn {
-  height: 26px; max-width: 75px;
-  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
-  background: linear-gradient(180deg, var(--btn-hi), var(--btn));
-  border: 1px solid var(--btn-border); border-radius: 3px;
-  color: #e6e7e8; font-size: 12px; font-family: inherit; cursor: default;
-  padding: 0 8px; white-space: nowrap;
+.tl-item:nth-child(even) { background: var(--alt-base); }
+.tl-item:hover::before {
+  content: ""; position: absolute; inset: 1px 2px; border-radius: 4.5px;
+  background: var(--menu-hover); z-index: 0;
 }
-.qbtn:hover:not(:disabled) { background: linear-gradient(180deg, #5d5f62, #545659); }
-.qbtn:active:not(:disabled) { background: #3f4144; }
-.qbtn:disabled { color: #787a7c; background: #3a3c3f; border-color: #4a4c4f; }
-.qbtn svg { width: 14px; height: 14px; flex: none; }
-#deletewarn { color: var(--red); font-size: 12px; padding-top: 5px; display: none; }
-#sash { width: 7px; flex: none; background: var(--content); cursor: col-resize; position: relative; }
+.tl-item.selected { color: var(--highlight-text); }
+.tl-item.selected::before {
+  content: ""; position: absolute; inset: 1px 2px; border-radius: 4.5px;
+  background: var(--highlight); z-index: 0;
+}
+.tl-item.selected span, .tl-item span { position: relative; z-index: 1; }
+#btnrow { display: flex; gap: 6px; padding-top: 8px; }
+#btnrow .qbtn { max-width: 96px; flex: 1; }
+#deletewarn { color: var(--red); font-size: 12px; padding-top: 6px; display: none; }
+#sash { width: 7px; flex: none; cursor: col-resize; position: relative; }
 #sash::after {
   content: ""; position: absolute; left: 3px; top: 50%; transform: translateY(-50%);
-  width: 1px; height: 24px; background: #4a4d50;
-  box-shadow: -3px 0 0 -1px #4a4d50, 3px 0 0 -1px #4a4d50;
+  width: 1px; height: 24px; background: var(--mid);
+  box-shadow: -3px 0 0 -1px var(--mid), 3px 0 0 -1px var(--mid);
 }
-#right { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+#right { flex: 1; display: flex; flex-direction: column; min-width: 0; padding: 8px 8px 8px 0; gap: 4px; }
 #preview {
-  flex: 1; background: var(--content); position: relative; overflow: hidden;
-  min-height: 120px;
+  flex: 1; background: var(--window); position: relative; overflow: hidden;
+  min-height: 120px; border-radius: 4.5px;
 }
 #preview img {
   position: absolute; inset: 0; width: 100%; height: 100%;
@@ -169,388 +314,421 @@ body {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   color: var(--placeholder); font-size: 13px;
 }
+#preview .pv-dash {
+  position: absolute; inset: 8px; border: 2px dashed var(--mid); border-radius: 8px;
+}
 #pvinfo {
   flex: none; height: 20px; line-height: 20px; text-align: center;
-  font-size: 12px; color: var(--text);
+  font-size: 12px; color: var(--window-text);
 }
-/* ── schedule preview ───────────────────────────────────────────────── */
+
+/* ── schedule preview (97px, kWallpaper geometry) ─────────────────────── */
 #schedule {
-  flex: none; height: 120px; margin: 0 8px 6px 8px;
-  display: flex; flex-direction: column; gap: 3px;
+  flex: none; height: 97px;
+  display: flex; flex-direction: column;
 }
 #schedhead {
-  height: 22px; flex: none; display: flex; align-items: center;
+  height: 18px; flex: none; display: flex; align-items: center;
 }
-#schedhead .title { font-size: 12px; font-weight: 600; color: var(--text); }
-#legend { margin-left: auto; display: flex; align-items: center; gap: 12px; padding-right: 4px; }
+#schedhead .title { font-size: 12px; font-weight: 600; color: var(--window-text); }
+#legend { margin-left: auto; display: flex; align-items: center; gap: 12px; }
 .lg-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--placeholder); }
 .lg-swatch { width: 10px; height: 10px; border-radius: 2px; }
 #schedbar {
-  flex: none; height: 60px; position: relative;
+  flex: none; height: 49px; position: relative; margin-top: 2px;
 }
 #ruler {
-  position: absolute; top: 0; left: 0; right: 0; height: 16px;
-  border-bottom: 1px solid #56585b;
+  position: absolute; top: 0; left: 0; right: 0; height: 14px;
+  border-bottom: 1px solid var(--midlight);
 }
-.tick { position: absolute; bottom: 0; width: 1px; background: #56585b; }
-.tick.major { background: #6a6c6f; height: 7px; }
+.tick { position: absolute; bottom: 0; width: 1px; background: var(--midlight); }
+.tick.major { background: var(--mid); height: 7px; }
 .tick.minor { height: 4px; }
 .tick-label {
-  position: absolute; bottom: 1px; font-size: 10px; color: var(--placeholder);
+  position: absolute; bottom: 0; font-size: 10px; color: var(--placeholder);
   transform: translateX(3px);
 }
 #strip {
-  position: absolute; top: 20px; left: 0; right: 0; height: 40px;
+  position: absolute; top: 17px; left: 0; right: 0; height: 32px;
 }
 .seg {
-  position: absolute; top: 0; height: 40px; border-radius: 3px;
-  display: flex; align-items: center; gap: 6px; padding: 0 6px;
+  position: absolute; top: 0; height: 32px; border-radius: 3px;
+  display: flex; align-items: center; gap: 6px; padding: 0 5px;
   overflow: hidden;
 }
 .seg img {
-  width: 28px; height: 28px; object-fit: cover; border-radius: 3px; flex: none;
-  border: 1px solid rgba(0,0,0,.5);
+  width: 24px; height: 24px; object-fit: cover; border-radius: 3px; flex: none;
+  border: 1px solid rgba(0,0,0,.25);
 }
-.seg .t { font-size: 11px; color: var(--text); white-space: nowrap; }
-.seg.night   { background: var(--seg-night-f);   border: 1px solid var(--seg-night-b); }
-.seg.sunrise { background: var(--seg-sunrise-f); border: 1px solid var(--seg-sunrise-b); }
-.seg.day     { background: var(--seg-day-f);     border: 1px solid var(--seg-day-b); }
-.seg.sunset  { background: var(--seg-sunset-f);  border: 1px solid var(--seg-sunset-b); }
-#marker { position: absolute; top: 0; width: 2px; height: 60px; background: var(--sel); z-index: 5; }
+.seg .t { font-size: 11px; color: var(--window-text); white-space: nowrap; }
+.seg.night   { background: rgba(85,102,136,.133);  border: 1px solid rgba(85,102,136,.35); }
+.seg.sunrise { background: rgba(245,194,107,.17);  border: 1px solid rgba(245,194,107,.4); }
+.seg.day     { background: rgba(126,200,240,.133); border: 1px solid rgba(126,200,240,.35); }
+.seg.sunset  { background: rgba(240,149,90,.17);   border: 1px solid rgba(240,149,90,.4); }
+#marker { position: absolute; top: 0; width: 2px; height: 49px; background: var(--highlight); z-index: 5; }
 #marker .dot {
-  position: absolute; top: 4px; left: -3px; width: 8px; height: 8px; border-radius: 50%;
-  background: var(--sel); border: 2px solid var(--content);
+  position: absolute; top: 2px; left: -3px; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--highlight); border: 2px solid var(--frame-bg);
 }
 #chip {
   position: absolute; top: 1px; height: 15px; line-height: 15px;
-  background: var(--sel); color: #fff; font-size: 10px; font-weight: 700;
+  background: var(--highlight); color: var(--highlight-text);
+  font-size: 10px; font-weight: 700;
   border-radius: 3px; padding: 0 5px; white-space: nowrap;
 }
 #schedfoot {
-  flex: none; height: 20px; line-height: 20px; font-size: 11px;
+  flex: none; height: 18px; line-height: 18px; font-size: 11px;
   color: var(--placeholder); white-space: nowrap; overflow: hidden;
+  margin-top: 2px;
 }
-/* ── settings tab ───────────────────────────────────────────────────── */
+
+/* ── settings tab ─────────────────────────────────────────────────────── */
 #tab-settings { flex-direction: column; }
-#settings-scroll { flex: 1; overflow-y: auto; padding: 10px 16px 0 16px; }
+#settings-scroll { flex: 1; overflow-y: auto; padding: 12px 16px 0 16px; }
 #settings-scroll::-webkit-scrollbar { width: 10px; }
-#settings-scroll::-webkit-scrollbar-thumb { background: #4a4d50; border-radius: 5px; }
-#settings-body { display: flex; flex-direction: column; gap: 16px; padding-bottom: 16px; }
-.group {
-  border: 1px solid var(--group-border); border-radius: 4px;
-  padding: 14px 16px 12px 16px; position: relative;
-}
-.group > .gtitle {
-  position: absolute; top: -9px; left: 10px; background: var(--content);
-  padding: 0 5px; font-size: 12.5px; color: #e6e7e8;
-}
-.frow { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-.frow:first-of-type { margin-top: 2px; }
-.frow label.fl { width: 92px; flex: none; font-size: 12px; color: #e6e7e8; white-space: nowrap; }
-.led {
-  flex: 1; height: 26px; background: var(--lineedit);
-  border: 1px solid var(--border-ctrl); border-radius: 3px;
-  display: flex; align-items: center; padding: 0 8px;
-  font-size: 12px; color: var(--text); min-width: 0;
-}
-.led input {
-  background: none; border: none; outline: none; width: 100%;
-  font: inherit; color: var(--text);
-}
-.spin {
-  flex: 1; height: 26px; background: var(--spinbox);
-  border: 1px solid var(--border-ctrl); border-radius: 3px;
-  display: flex; align-items: center; padding: 0 4px 0 8px;
-  font-size: 12px; color: var(--text); min-width: 0;
-}
-.spin .val { flex: 1; overflow: hidden; white-space: nowrap; }
-.spin .arrows { display: flex; flex-direction: column; gap: 1px; flex: none; }
-.spin .arrows button {
-  width: 16px; height: 11px; background: #3a3d40; border: 1px solid var(--border-ctrl);
-  color: #c8c9ca; font-size: 7px; line-height: 1; cursor: default;
-  display: flex; align-items: center; justify-content: center;
-}
-.spin .arrows button:first-child { border-radius: 2px 2px 0 0; }
-.spin .arrows button:last-child { border-radius: 0 0 2px 2px; }
-.cbx { display: flex; align-items: center; gap: 8px; cursor: default; font-size: 12px; color: #e6e7e8; }
-.cbx .box {
-  width: 15px; height: 15px; flex: none; background: var(--spinbox);
-  border: 1px solid var(--border-ctrl); border-radius: 3px;
-  display: flex; align-items: center; justify-content: center;
-  color: transparent; font-size: 11px;
-}
-.cbx.on .box { color: #fff; }
-.combo {
-  flex: 1; height: 26px; background: var(--lineedit);
-  border: 1px solid var(--border-ctrl); border-radius: 3px;
-  display: flex; align-items: center; padding: 0 8px;
-  font-size: 12px; color: var(--text); position: relative;
-}
-.combo .cval { flex: 1; }
-.combo .carrow { color: #c8c9ca; font-size: 10px; }
+#settings-scroll::-webkit-scrollbar-track { background: var(--frame-bg); }
+#settings-scroll::-webkit-scrollbar-thumb { background: var(--mid); border-radius: 5px; border: 2px solid var(--frame-bg); }
+#settings-body { display: flex; flex-direction: column; gap: 18px; padding-bottom: 16px; }
 #settings-btnrow {
   flex: none; display: flex; justify-content: flex-end; padding: 10px 16px;
-  border-top: 1px solid var(--border);
 }
-.qbtn.save { max-width: none; padding: 0 14px; height: 28px; }
-/* ── scheduler tab ──────────────────────────────────────────────────── */
-#tab-scheduler { flex-direction: column; padding: 10px 16px; gap: 12px; }
+
+/* ── scheduler tab ────────────────────────────────────────────────────── */
+#tab-scheduler { flex-direction: column; padding: 12px 16px; gap: 14px; }
 #sched-status-group { flex: none; }
 #bigstatus {
   height: 56px; display: flex; align-items: center; justify-content: center;
-  font-size: 17px; color: var(--text);
+  font-size: 17px; color: var(--window-text);
 }
-#bigstatus.running { color: #b58ad2; }
-#ss-row { display: flex; gap: 8px; padding: 0 16px 12px 16px; }
-#ss-row .qbtn { max-width: none; padding: 0 14px; }
+#bigstatus.running { color: var(--highlight); }
+#ss-row { display: flex; gap: 8px; }
+#ss-row .qbtn { min-width: 96px; }
 #log-group { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 #log {
-  flex: 1; background: var(--lineedit); border: 1px solid var(--border-ctrl);
-  border-radius: 3px; overflow-y: auto; padding: 6px 10px;
+  flex: 1; background: var(--base); border: 1px solid var(--frame-outline);
+  border-radius: 5px; overflow-y: auto; padding: 6px 10px; margin-top: 4px;
   font-family: "DejaVu Sans Mono", "Noto Sans Mono", monospace; font-size: 12px;
-  color: #d8d9da; line-height: 1.55;
+  color: var(--window-text); line-height: 1.55; min-height: 0;
 }
 #log::-webkit-scrollbar { width: 10px; }
-#log::-webkit-scrollbar-thumb { background: #4a4d50; border-radius: 5px; }
-/* ── status bar ─────────────────────────────────────────────────────── */
+#log::-webkit-scrollbar-track { background: var(--base); }
+#log::-webkit-scrollbar-thumb { background: var(--mid); border-radius: 5px; border: 2px solid var(--base); }
+
+/* ── status bar ───────────────────────────────────────────────────────── */
 #statusbar {
-  height: 24px; flex: none; background: var(--tabbar);
-  border-top: 1px solid var(--border);
+  height: 24px; flex: none; background: var(--window);
+  border-top: 1px solid var(--frame-outline);
   display: flex; align-items: center; padding: 0 10px;
-  font-size: 12px; color: var(--text-dim);
+  font-size: 12px; color: var(--window-text);
 }
-/* ── modal ──────────────────────────────────────────────────────────── */
+
+/* ── dropdown menu (Breeze 6.7: rounded, tinted hover) ────────────────── */
+.dropdown {
+  position: absolute; top: 40px; min-width: 220px;
+  background: var(--menu-bg); border: 1px solid var(--frame-outline);
+  border-radius: 5px; box-shadow: 0 6px 18px rgba(0,0,0,.3);
+  display: none; z-index: 60; padding: 3px;
+}
+.dropdown.open { display: block; }
+.dd-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 10px 5px 8px; cursor: default; white-space: nowrap;
+  border-radius: 4.5px; color: var(--window-text);
+}
+.dd-item:hover:not(.disabled) { background: var(--menu-hover); }
+.dd-item .sc { margin-left: auto; color: var(--placeholder); font-size: 12px; padding-left: 24px; }
+.dd-item.disabled { color: var(--disabled); }
+.dd-sep { height: 1px; background: var(--separator); margin: 3px 6px; }
+.dd-item svg { width: 16px; height: 16px; flex: none; }
+
+/* ── modal (QMessageBox) ──────────────────────────────────────────────── */
 #modal-back {
-  position: absolute; inset: 0; background: rgba(0,0,0,.45);
+  position: absolute; inset: 0; background: rgba(0,0,0,.35);
   display: none; align-items: center; justify-content: center; z-index: 100;
+  border-radius: 5px;
 }
 #modal-back.open { display: flex; }
 #modal {
-  width: 420px; background: #2a2d30; border: 1px solid var(--border-ctrl);
-  border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,.6);
+  width: 440px; background: var(--window); border-radius: 5px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.5); overflow: hidden;
+  border: 1px solid rgba(0,0,0,.3);
 }
-#modal .mtitle {
-  padding: 10px 14px; font-size: 13px; font-weight: 600;
-  border-bottom: 1px solid #3a3d40;
+#modal .mtitlebar {
+  height: 36px; background: var(--titlebar);
+  display: flex; align-items: center; padding: 0 6px 0 12px;
+  font-size: 13px; color: var(--titlebar-text);
 }
-#modal .mbody { padding: 14px; font-size: 12.5px; line-height: 1.5; color: #e6e7e8; }
-#modal .mbtns { display: flex; justify-content: flex-end; gap: 8px; padding: 0 14px 14px 14px; }
-#modal .qbtn { max-width: none; padding: 0 16px; }
+#modal .mtitlebar .tb-btn { width: 28px; height: 28px; }
+#modal .mbody {
+  padding: 16px; font-size: 13px; line-height: 1.5; color: var(--window-text);
+  display: flex; gap: 14px; align-items: flex-start;
+  white-space: pre-line;
+}
+#modal .mbody > svg { width: 32px; height: 32px; flex: none; margin-top: 2px; }
+#modal .mbtns { display: flex; justify-content: flex-end; gap: 8px; padding: 0 16px 16px 16px; }
+#modal .qbtn { min-width: 96px; }
+
+/* ── mockup chrome (not part of the app) ──────────────────────────────── */
 #mockup-note {
-  position: absolute; left: 0; right: 0; bottom: -30px;
-  text-align: center; color: #6a6c6f; font-size: 12px;
+  position: absolute; left: 0; right: 0; bottom: 8px;
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  color: rgba(255,255,255,.75); font-size: 12px;
 }
+#theme-toggle {
+  display: flex; border: 1px solid rgba(255,255,255,.35); border-radius: 4px; overflow: hidden;
+}
+#theme-toggle button {
+  background: rgba(255,255,255,.12); color: rgba(255,255,255,.85);
+  border: none; padding: 4px 12px; font: 12px "Noto Sans", sans-serif; cursor: pointer;
+}
+#theme-toggle button.active { background: rgba(255,255,255,.35); color: #fff; }
 </style>
 </head>
-<body>
+<body data-theme="light">
 <div id="stage">
 <div id="win">
 
+  <!-- ══ unified title bar (KTitleWidget + KWin Breeze buttons) ═══════ -->
   <div id="titlebar">
-    Johona Wallpaper
-    <div class="tb-btns">
-      <div class="tb-btn">─</div><div class="tb-btn">□</div><div class="tb-btn">✕</div>
-    </div>
-  </div>
-
-  <div id="menubar">
-    <span class="menu" data-menu="file"><u>F</u>ile</span>
-    <span class="menu" data-menu="sched">S<u>c</u>heduler</span>
-    <span class="menu" data-menu="help"><u>H</u>elp</span>
-  </div>
-
-  <div id="tabbar">
-    <div class="tab active" data-tab="themes">
-      <svg viewBox="0 0 16 16"><rect x="1" y="2" width="14" height="12" rx="1.5" fill="none" stroke="#9aa0a6" stroke-width="1.2"/><circle cx="5.2" cy="6" r="1.4" fill="#e8b04a"/><path d="M2 12.5 L6.5 8 L9.5 11 L11.5 9 L14 12.5 Z" fill="#5aa0c8"/></svg>
-      Themes
-    </div>
-    <div class="tab" data-tab="settings">
-      <svg viewBox="0 0 16 16" fill="none" stroke="#9aa0a6" stroke-width="1.3"><line x1="1.5" y1="4" x2="14.5" y2="4"/><line x1="1.5" y1="8" x2="14.5" y2="8"/><line x1="1.5" y1="12" x2="14.5" y2="12"/><circle cx="10.5" cy="4" r="1.8" fill="#2a2d30"/><circle cx="5" cy="8" r="1.8" fill="#2a2d30"/><circle cx="11.5" cy="12" r="1.8" fill="#2a2d30"/></svg>
-      Settings
-    </div>
-    <div class="tab" data-tab="scheduler">
-      <svg viewBox="0 0 16 16" fill="none" stroke="#9aa0a6" stroke-width="1.3"><circle cx="8" cy="9" r="5.5"/><line x1="8" y1="9" x2="8" y2="6"/><line x1="8" y1="9" x2="10.3" y2="10.5"/><line x1="6.5" y1="1.8" x2="9.5" y2="1.8"/></svg>
-      Scheduler
-    </div>
-  </div>
-
-  <div id="content">
-
-    <!-- ══ THEMES ═══════════════════════════════════════════════════ -->
-    <div id="tab-themes" class="tabpage active">
-      <div id="left">
-        <div id="themetelist"></div>
-        <div id="btnrow">
-          <button class="qbtn" id="btn-import" title="Import a .ddw or .zip theme file">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M9.5 1.5 H3.5 a1 1 0 0 0 -1 1 v11 a1 1 0 0 0 1 1 h9 a1 1 0 0 0 1 -1 V5.5 Z"/><path d="M9.5 1.5 V5.5 H13.5"/><path d="M8 7.5 V11.5 M6 9.5 L8 11.5 L10 9.5"/></svg>
-            Import…
-          </button>
-          <button class="qbtn" id="btn-apply" title="Set the selected theme as your wallpaper">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2.5 8.5 L6 12 L13.5 4.5"/></svg>
-            Apply
-          </button>
-          <button class="qbtn" id="btn-delete" title="Delete the selected theme">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2.5 4 H13.5"/><path d="M6.5 4 V2.5 H9.5 V4"/><path d="M4 4 L4.8 13.5 H11.2 L12 4"/><line x1="6.5" y1="6.5" x2="6.8" y2="11"/><line x1="9.5" y1="6.5" x2="9.2" y2="11"/></svg>
-            Delete
-          </button>
-        </div>
-        <div id="deletewarn">Scheduler must be stopped to delete themes</div>
+    <div class="tb-left">
+      <div class="tb-icon">
+        <svg viewBox="0 0 512 512"><circle cx="256" cy="256" r="112" fill="#F8C156"/><g stroke="#F8C156" stroke-width="30" stroke-linecap="round"><line x1="256" y1="64" x2="256" y2="116"/><line x1="256" y1="396" x2="256" y2="448"/><line x1="64" y1="256" x2="116" y2="256"/><line x1="396" y1="256" x2="448" y2="256"/><line x1="120" y1="120" x2="160" y2="160"/><line x1="352" y1="352" x2="392" y2="392"/><line x1="392" y1="120" x2="352" y2="160"/><line x1="160" y1="352" x2="120" y2="392"/></g></svg>
       </div>
-      <div id="sash"></div>
-      <div id="right">
-        <div id="preview">
-          <img id="pv-a" alt="">
-          <img id="pv-b" alt="">
-          <div class="pv-msg" id="pv-msg" style="display:none">Select a theme to preview</div>
-        </div>
-        <div id="pvinfo"></div>
-        <div id="schedule">
-          <div id="schedhead">
-            <span class="title">Schedule</span>
-            <span id="legend">
-              <span class="lg-item"><span class="lg-swatch" style="background:rgba(85,102,136,.55);border:1px solid rgba(85,102,136,.8)"></span>Night</span>
-              <span class="lg-item"><span class="lg-swatch" style="background:rgba(245,194,107,.5);border:1px solid rgba(245,194,107,.8)"></span>Sunrise</span>
-              <span class="lg-item"><span class="lg-swatch" style="background:rgba(126,200,240,.45);border:1px solid rgba(126,200,240,.8)"></span>Day</span>
-              <span class="lg-item"><span class="lg-swatch" style="background:rgba(240,149,90,.5);border:1px solid rgba(240,149,90,.8)"></span>Sunset</span>
-            </span>
-          </div>
-          <div id="schedbar">
-            <div id="ruler"></div>
-            <div id="strip"></div>
-            <div id="marker"><div class="dot"></div><div id="chip">--:--</div></div>
-          </div>
-          <div id="schedfoot"></div>
-        </div>
+      <div class="tb-title">Johona Wallpaper</div>
+      <button class="tb-btn" id="menu-btn" title="Menu">
+        <span class="halo"></span>
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="4" y1="6" x2="16" y2="6"/><line x1="4" y1="10" x2="16" y2="10"/><line x1="4" y1="14" x2="16" y2="14"/></svg>
+      </button>
+    </div>
+    <div class="tb-right">
+      <button class="tb-btn" id="btn-min" title="Minimize">
+        <span class="halo"></span>
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5,8 10,13 15,8"/></svg>
+      </button>
+      <button class="tb-btn" id="btn-max" title="Maximize">
+        <span class="halo"></span>
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="5,12 10,7 15,12"/></svg>
+      </button>
+      <button class="tb-btn tb-close" id="btn-close" title="Close">
+        <span class="halo"></span>
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><line x1="6" y1="6" x2="14" y2="14"/><line x1="14" y1="6" x2="6" y2="14"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="body">
+    <!-- ══ Breeze 6.7 tab bar ═════════════════════════════════════════ -->
+    <div id="tabbar">
+      <div class="tab active" data-tab="themes">
+        <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3.5" width="18" height="15" rx="2"/><circle cx="7.5" cy="8.5" r="1.6"/><path d="M3 16 L8.5 10.5 L12 14 L14.5 11.5 L19 16"/></svg>
+        Themes
+      </div>
+      <div class="tab" data-tab="settings">
+        <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="3" y1="6" x2="19" y2="6"/><line x1="3" y1="11" x2="19" y2="11"/><line x1="3" y1="16" x2="19" y2="16"/><circle cx="14" cy="6" r="2.2" fill="var(--frame-bg)"/><circle cx="8" cy="11" r="2.2" fill="var(--frame-bg)"/><circle cx="15" cy="16" r="2.2" fill="var(--frame-bg)"/></svg>
+        Settings
+      </div>
+      <div class="tab" data-tab="scheduler">
+        <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="12.5" r="7"/><line x1="11" y1="12.5" x2="11" y2="8.5"/><line x1="11" y1="12.5" x2="14" y2="14"/><line x1="8.5" y1="2.5" x2="13.5" y2="2.5"/></svg>
+        Scheduler
       </div>
     </div>
 
-    <!-- ══ SETTINGS ═════════════════════════════════════════════════ -->
-    <div id="tab-settings" class="tabpage">
-      <div id="settings-scroll">
-        <div id="settings-body">
+    <div id="pane">
+      <div id="content">
 
-          <div class="group">
-            <span class="gtitle">Scheduler</span>
-            <div class="frow">
-              <label class="fl">Cycle interval:</label>
-              <div class="spin"><span class="val" id="v-interval">60 s</span>
-                <span class="arrows"><button>▲</button><button>▼</button></span>
-              </div>
+        <!-- ══ THEMES ═════════════════════════════════════════════════ -->
+        <div id="tab-themes" class="tabpage active">
+          <div id="left">
+            <div id="themetelist"></div>
+            <div id="btnrow">
+              <button class="qbtn" id="btn-import" title="Import a .ddw or .zip theme file">
+                <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13.5 V18 H19 V13.5"/><line x1="11" y1="3" x2="11" y2="12"/><path d="M7.5 8.5 L11 12 L14.5 8.5"/></svg>
+                Import…
+              </button>
+              <button class="qbtn" id="btn-apply" title="Set the selected theme as your wallpaper">
+                <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 L9 16.5 L18 6"/></svg>
+                Apply
+              </button>
+              <button class="qbtn" id="btn-delete" title="Delete the selected theme">
+                <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3.5" y1="5.5" x2="18.5" y2="5.5"/><path d="M8.5 5.5 V3.5 H13.5 V5.5"/><path d="M5.5 5.5 L6.3 18.5 H15.7 L16.5 5.5"/><line x1="9.2" y1="8.5" x2="9.6" y2="15.5"/><line x1="12.8" y1="8.5" x2="12.4" y2="15.5"/></svg>
+                Delete
+              </button>
             </div>
-            <div class="frow"><span class="cbx on" data-cbx><span class="box">✓</span>Enable cycle task (runs every interval)</span></div>
-            <div class="frow"><span class="cbx on" data-cbx><span class="box">✓</span>Enable daily theme shuffle</span></div>
-            <div class="frow"><span class="cbx on" data-cbx><span class="box">✓</span>Start scheduler on app launch</span></div>
+            <div id="deletewarn">Scheduler must be stopped to delete themes</div>
           </div>
-
-          <div class="group">
-            <span class="gtitle">Location</span>
-            <div class="frow">
-              <label class="fl">Timezone:</label>
-              <div class="led"><input id="v-tz" value="America/Phoenix" spellcheck="false"></div>
+          <div id="sash"></div>
+          <div id="right">
+            <div id="preview">
+              <img id="pv-a" alt="">
+              <img id="pv-b" alt="">
+              <div class="pv-dash" id="pv-dash" style="display:none"></div>
+              <div class="pv-msg" id="pv-msg" style="display:none">Select a theme to preview</div>
             </div>
-            <div class="frow">
-              <div class="spin" style="flex:1.2"><span class="val">33.4484</span>
-                <span class="arrows"><button>▲</button><button>▼</button></span>
+            <div id="pvinfo"></div>
+            <div id="schedule">
+              <div id="schedhead">
+                <span class="title">Schedule</span>
+                <span id="legend">
+                  <span class="lg-item"><span class="lg-swatch" style="background:rgba(85,102,136,.55);border:1px solid rgba(85,102,136,.8)"></span>Night</span>
+                  <span class="lg-item"><span class="lg-swatch" style="background:rgba(245,194,107,.5);border:1px solid rgba(245,194,107,.8)"></span>Sunrise</span>
+                  <span class="lg-item"><span class="lg-swatch" style="background:rgba(126,200,240,.45);border:1px solid rgba(126,200,240,.8)"></span>Day</span>
+                  <span class="lg-item"><span class="lg-swatch" style="background:rgba(240,149,90,.5);border:1px solid rgba(240,149,90,.8)"></span>Sunset</span>
+                </span>
               </div>
-              <label class="fl" style="width:auto">Latitude</label>
-              <div class="spin" style="flex:1.2"><span class="val">-112.0740</span>
-                <span class="arrows"><button>▲</button><button>▼</button></span>
+              <div id="schedbar">
+                <div id="ruler"></div>
+                <div id="strip"></div>
+                <div id="marker"><div class="dot"></div><div id="chip">--:--</div></div>
               </div>
-              <label class="fl" style="width:auto">Longitude</label>
-              <button class="qbtn" id="btn-detect" style="max-width:none;padding:0 10px">
-                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M13.5 8 A5.5 5.5 0 1 1 8 2.5"/><path d="M8 2.5 L11 1 M8 2.5 L10.5 4.5"/></svg>
-                Auto-detect
+              <div id="schedfoot"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ SETTINGS ═══════════════════════════════════════════════ -->
+        <div id="tab-settings" class="tabpage">
+          <div id="settings-scroll">
+            <div id="settings-body">
+
+              <div class="group">
+                <span class="gtitle">Scheduler</span>
+                <div class="frow">
+                  <label class="fl">Cycle interval:</label>
+                  <div class="spin" style="flex:1"><span class="val" id="v-interval">60 s</span>
+                    <span class="arrows"><button>▲</button><button>▼</button></span>
+                  </div>
+                </div>
+                <div class="frow"><span class="cbx on" data-cbx><span class="box"><svg viewBox="0 0 12 12" fill="none" stroke="var(--window-text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="miter"><path d="M2 6.5 L4.8 9.5 L10 3"/></svg></span>Enable cycle task (runs every interval)</span></div>
+                <div class="frow"><span class="cbx on" data-cbx><span class="box"><svg viewBox="0 0 12 12" fill="none" stroke="var(--window-text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="miter"><path d="M2 6.5 L4.8 9.5 L10 3"/></svg></span>Enable daily theme shuffle</span></div>
+                <div class="frow"><span class="cbx on" data-cbx><span class="box"><svg viewBox="0 0 12 12" fill="none" stroke="var(--window-text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="miter"><path d="M2 6.5 L4.8 9.5 L10 3"/></svg></span>Start scheduler on app launch</span></div>
+              </div>
+
+              <div class="group">
+                <span class="gtitle">Location</span>
+                <div class="frow">
+                  <label class="fl">Timezone:</label>
+                  <div class="led"><input id="v-tz" value="America/Phoenix" spellcheck="false"></div>
+                </div>
+                <div class="frow">
+                  <div class="spin" style="flex:1.2"><span class="val">33.4484</span>
+                    <span class="arrows"><button>▲</button><button>▼</button></span>
+                  </div>
+                  <label class="fl" style="width:auto">Latitude</label>
+                  <div class="spin" style="flex:1.2"><span class="val">-112.0740</span>
+                    <span class="arrows"><button>▲</button><button>▼</button></span>
+                  </div>
+                  <label class="fl" style="width:auto">Longitude</label>
+                  <button class="qbtn" id="btn-detect" style="min-width:0">
+                    <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11 A7 7 0 1 1 11 4"/><path d="M11 4 L14.5 2 M11 4 L13.5 6.5"/></svg>
+                    Auto-detect
+                  </button>
+                </div>
+              </div>
+
+              <div class="group">
+                <span class="gtitle">Wallpaper backend</span>
+                <div class="frow">
+                  <label class="fl">Backend:</label>
+                  <div class="combo"><span class="cval">Auto (detected)</span><span class="cbtn"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5 L6 8 L9.5 4.5"/></svg></span></div>
+                </div>
+                <div class="frow">
+                  <label class="fl"></label>
+                  <span class="hint">Auto uses the first available desktop backend (Plasma, portal, GNOME, xdg-settings).</span>
+                </div>
+              </div>
+
+              <div class="group">
+                <span class="gtitle">Appearance</span>
+                <div class="frow"><span class="cbx on" data-cbx><span class="box"><svg viewBox="0 0 12 12" fill="none" stroke="var(--window-text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="miter"><path d="M2 6.5 L4.8 9.5 L10 3"/></svg></span>Start automatically at login</span></div>
+                <div class="frow">
+                  <label class="fl">Color scheme:</label>
+                  <div class="combo"><span class="cval">System</span><span class="cbtn"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5 L6 8 L9.5 4.5"/></svg></span></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+          <div id="settings-btnrow">
+            <button class="qbtn default" id="btn-save">
+              <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 3.5 H15 L18.5 7 V18.5 H3.5 Z"/><path d="M6.5 3.5 V8 H13.5 V3.5"/><rect x="6.5" y="12" width="9" height="6.5"/></svg>
+              Save Settings
+            </button>
+          </div>
+        </div>
+
+        <!-- ══ SCHEDULER ══════════════════════════════════════════════ -->
+        <div id="tab-scheduler" class="tabpage">
+          <div class="group" id="sched-status-group">
+            <span class="gtitle">Status</span>
+            <div id="bigstatus">Running</div>
+            <div id="ss-row">
+              <button class="qbtn" id="btn-start">
+                <svg viewBox="0 0 22 22"><path d="M6.5 4 L17 11 L6.5 18 Z" fill="currentColor"/></svg>
+                Start
+              </button>
+              <button class="qbtn" id="btn-stop">
+                <svg viewBox="0 0 22 22"><rect x="5.5" y="5.5" width="11" height="11" rx="1.5" fill="currentColor"/></svg>
+                Stop
               </button>
             </div>
           </div>
-
-          <div class="group">
-            <span class="gtitle">Wallpaper backend</span>
-            <div class="frow">
-              <label class="fl">Backend:</label>
-              <div class="combo"><span class="cval">Auto (detected)</span><span class="carrow">▼</span></div>
-            </div>
+          <div class="group" id="log-group">
+            <span class="gtitle">Event Log</span>
+            <div id="log"></div>
           </div>
-
-          <div class="group">
-            <span class="gtitle">Appearance</span>
-            <div class="frow"><span class="cbx on" data-cbx><span class="box">✓</span>Start automatically at login</span></div>
-            <div class="frow">
-              <label class="fl">Color scheme:</label>
-              <div class="combo"><span class="cval">System</span><span class="carrow">▼</span></div>
-            </div>
-          </div>
-
         </div>
-      </div>
-      <div id="settings-btnrow">
-        <button class="qbtn save" id="btn-save">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2.5 2.5 H11 L13.5 5 V13.5 H2.5 Z"/><path d="M4.5 2.5 V6 H10 V2.5"/><rect x="4.5" y="9" width="7" height="4.5"/></svg>
-          Save Settings
-        </button>
+
       </div>
     </div>
 
-    <!-- ══ SCHEDULER ════════════════════════════════════════════════ -->
-    <div id="tab-scheduler" class="tabpage">
-      <div class="group" id="sched-status-group">
-        <span class="gtitle">Status</span>
-        <div id="bigstatus">Running</div>
-        <div id="ss-row">
-          <button class="qbtn" id="btn-start">
-            <svg viewBox="0 0 16 16"><path d="M4 2.5 L13 8 L4 13.5 Z" fill="currentColor"/></svg>
-            Start
-          </button>
-          <button class="qbtn" id="btn-stop">
-            <svg viewBox="0 0 16 16"><rect x="3.5" y="3.5" width="9" height="9" rx="1" fill="currentColor"/></svg>
-            Stop
-          </button>
-        </div>
-      </div>
-      <div class="group" id="log-group">
-        <span class="gtitle">Event Log</span>
-        <div id="log"></div>
-      </div>
-    </div>
-
+    <div id="statusbar"><span id="statusmsg">Ready</span></div>
   </div>
 
-  <div id="statusbar"><span id="statusmsg">Ready</span></div>
-
-  <!-- dropdown menus -->
-  <div class="dropdown" id="dd-file" style="left:0">
+  <!-- ══ application menu (hamburger, Breeze 6.7 dropdown) ════════════ -->
+  <div class="dropdown" id="dd-main" style="left:118px">
     <div class="dd-item" data-act="import">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M9.5 1.5 H3.5 a1 1 0 0 0 -1 1 v11 a1 1 0 0 0 1 1 h9 a1 1 0 0 0 1 -1 V5.5 Z"/><path d="M9.5 1.5 V5.5 H13.5"/><path d="M8 7.5 V11.5 M6 9.5 L8 11.5 L10 9.5"/></svg>
+      <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13.5 V18 H19 V13.5"/><line x1="11" y1="3" x2="11" y2="12"/><path d="M7.5 8.5 L11 12 L14.5 8.5"/></svg>
       Import Theme…<span class="sc">Ctrl+I</span></div>
     <div class="dd-sep"></div>
     <div class="dd-item" data-act="quit">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1.5 V7"/><path d="M4.5 3.5 A5.5 5.5 0 1 0 11.5 3.5"/></svg>
+      <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3 V10"/><path d="M6.5 5.5 A6.5 6.5 0 1 0 15.5 5.5"/></svg>
       Quit<span class="sc">Ctrl+Q</span></div>
-  </div>
-  <div class="dropdown" id="dd-sched" style="left:40px">
+    <div class="dd-sep"></div>
     <div class="dd-item" data-act="sched-start">
-      <svg viewBox="0 0 16 16"><path d="M4 2.5 L13 8 L4 13.5 Z" fill="currentColor"/></svg>
+      <svg viewBox="0 0 22 22"><path d="M6.5 4 L17 11 L6.5 18 Z" fill="currentColor"/></svg>
       Start</div>
     <div class="dd-item disabled" data-act="sched-stop">
-      <svg viewBox="0 0 16 16"><rect x="3.5" y="3.5" width="9" height="9" rx="1" fill="currentColor"/></svg>
+      <svg viewBox="0 0 22 22"><rect x="5.5" y="5.5" width="11" height="11" rx="1.5" fill="currentColor"/></svg>
       Stop</div>
-  </div>
-  <div class="dropdown" id="dd-help" style="left:118px">
+    <div class="dd-sep"></div>
     <div class="dd-item" data-act="about">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="8" cy="8" r="6.5"/><line x1="8" y1="7" x2="8" y2="11.5"/><circle cx="8" cy="4.5" r=".8" fill="currentColor" stroke="none"/></svg>
+      <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="11" y1="10" x2="11" y2="15.5"/><circle cx="11" cy="6.8" r="1" fill="currentColor" stroke="none"/></svg>
       About…</div>
   </div>
 
-  <!-- modal -->
+  <!-- ══ modal ════════════════════════════════════════════════════════ -->
   <div id="modal-back">
     <div id="modal">
-      <div class="mtitle" id="m-title"></div>
-      <div class="mbody" id="m-body"></div>
+      <div class="mtitlebar">
+        <span id="m-title"></span>
+        <button class="tb-btn tb-close" id="m-close" style="margin-left:auto">
+          <span class="halo"></span>
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><line x1="6" y1="6" x2="14" y2="14"/><line x1="14" y1="6" x2="6" y2="14"/></svg>
+        </button>
+      </div>
+      <div class="mbody"><span id="m-icon"></span><span id="m-body"></span></div>
       <div class="mbtns" id="m-btns"></div>
     </div>
   </div>
 
-  <div id="mockup-note">Static mockup — layout reference for the C++/Qt rewrite (colors sampled from kWallpaper screenshots)</div>
+</div>
+
+<div id="mockup-note">
+  <span>Johona Wallpaper — Plasma 6.7 / Breeze 6.7 mockup (colors &amp; metrics from breeze 6.7.0 sources)</span>
+  <span id="theme-toggle">
+    <button data-mode="light" class="active">Breeze Light</button>
+    <button data-mode="dark">Breeze Dark</button>
+  </span>
 </div>
 </div>
 
@@ -560,8 +738,6 @@ const THEMES = [{"folder": "24hr-AboveClouds", "name": "Above Clouds", "images":
 const BASE = "/home/admin/.var/app/top.spelunk.johona/data/johona/themes";
 
 // ── sun-segment windows for the day (America/Phoenix, from the C++ engine) ──
-// night 19:26:28 → 05:36:20 (wraps), sunrise 05:35:37 → 06:34:24,
-// day 06:34:24 → 18:27:41, sunset 18:27:41 → 19:26:28
 const SEG = {
   sunrise: [5*3600+35*60+37, 6*3600+34*60+24],
   day:     [6*3600+34*60+24, 18*3600+27*60+41],
@@ -603,7 +779,8 @@ function buildList() {
   for (const t of THEMES) {
     const d = document.createElement("div");
     d.className = "tl-item" + (t === state.theme ? " selected" : "");
-    d.textContent = t.name;
+    d.innerHTML = "<span></span>";
+    d.firstChild.textContent = t.name;
     d.dataset.folder = t.folder;
     d.title = t.folder;
     d.onclick = () => selectTheme(t);
@@ -762,8 +939,10 @@ function setRunning(run) {
   $("#bigstatus").classList.toggle("running", run);
   $("#btn-delete").disabled = run;
   $("#deletewarn").style.display = run ? "block" : "none";
-  $$("#dd-sched .dd-item")[0].classList.toggle("disabled", run);
-  $$("#dd-sched .dd-item")[1].classList.toggle("disabled", !run);
+  const si = $("#dd-main .dd-item[data-act='sched-start']");
+  const so = $("#dd-main .dd-item[data-act='sched-stop']");
+  si.classList.toggle("disabled", run);
+  so.classList.toggle("disabled", !run);
   logLine(run ? "Scheduler started" : "Scheduler stopped");
   status(run ? "Scheduler started" : "Scheduler stopped");
 }
@@ -784,21 +963,26 @@ function seedLog() {
   lines.forEach(l => logLine(l));
 }
 
-// ── modal ─────────────────────────────────────────────────────────────
-function modal(title, body, buttons, onPick) {
+// ── modal (Breeze QMessageBox) ────────────────────────────────────────
+const ICON_INFO = '<svg viewBox="0 0 22 22" fill="none" stroke="var(--highlight)" stroke-width="1.6" stroke-linecap="round"><circle cx="11" cy="11" r="8.5"/><line x1="11" y1="10" x2="11" y2="15.5"/><circle cx="11" cy="6.8" r="1.1" fill="var(--highlight)" stroke="none"/></svg>';
+function modal(title, body, buttons, onPick, kind = "info") {
   $("#m-title").textContent = title;
   $("#m-body").textContent = body;
+  $("#m-icon").innerHTML = kind === "warning"
+    ? '<svg viewBox="0 0 22 22" fill="none" stroke="var(--orange)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3 L20 19 H2 Z"/><line x1="11" y1="9" x2="11" y2="13.5"/><circle cx="11" cy="16.2" r="1" fill="var(--orange)" stroke="none"/></svg>'
+    : ICON_INFO;
   const bb = $("#m-btns");
   bb.innerHTML = "";
-  for (const [label, val] of buttons) {
+  buttons.forEach(([label, val], i) => {
     const b = document.createElement("button");
-    b.className = "qbtn";
+    b.className = "qbtn" + (i === 0 ? " default" : "");
     b.textContent = label;
     b.onclick = () => { $("#modal-back").classList.remove("open"); if (onPick) onPick(val); };
     bb.appendChild(b);
-  }
+  });
   $("#modal-back").classList.add("open");
 }
+$("#m-close").onclick = () => $("#modal-back").classList.remove("open");
 
 // ── actions ───────────────────────────────────────────────────────────
 function doApply() {
@@ -819,12 +1003,12 @@ function doDelete() {
     "Delete theme \u201C" + t.name + "\u201D and all of its images?",
     [["Yes", 1], ["No", 0]], v => {
       if (v === 1) { status("Theme deleted"); logLine("Deleted theme: " + t.name); }
-    });
+    }, "warning");
 }
 function doImport() { status("Choose a .ddw or .zip theme file…"); }
 function doAbout() {
   modal("About Johona Wallpaper",
-    "Johona Wallpaper\nVersion 1.0.0\n\nDynamic wallpaper manager for Linux (Flatpak).\nChanges wallpapers based on time of day using\nsunrise / sunset calculations.",
+    "Johona Wallpaper 1.0.0\n\nA Flatpak wallpaper scheduler for Linux: it switches\nwallpaper themes with the sun (dawn → golden hour → day →\ngolden hour → dusk → night), with optional daily shuffling\nand multi-desktop backends (Plasma, XDG portal, GNOME,\nxdg-settings).",
     [["OK", 0]]);
 }
 
@@ -836,18 +1020,15 @@ $$(".tab").forEach(tb => tb.onclick = () => {
   $("#tab-" + tb.dataset.tab).classList.add("active");
   if (tb.dataset.tab === "themes") buildRuler();
 });
-$$(".menu").forEach(m => m.onclick = e => {
+const dd = $("#dd-main");
+$("#menu-btn").onclick = e => {
   e.stopPropagation();
-  const dd = $("#dd-" + m.dataset.menu);
-  const wasOpen = dd.classList.contains("open");
-  $$(".dropdown").forEach(d => d.classList.remove("open"));
-  $$(".menu").forEach(x => x.classList.remove("open"));
-  if (!wasOpen) { dd.classList.add("open"); m.classList.add("open"); }
-});
-document.addEventListener("click", () => {
-  $$(".dropdown").forEach(d => d.classList.remove("open"));
-  $$(".menu").forEach(x => x.classList.remove("open"));
-});
+  const willOpen = !dd.classList.contains("open");
+  if (willOpen) dd.style.left = (e.currentTarget.offsetLeft + 4) + "px";
+  dd.classList.toggle("open");
+};
+document.addEventListener("click", () => dd.classList.remove("open"));
+dd.onclick = e => e.stopPropagation();
 $$(".dd-item").forEach(it => it.onclick = e => {
   e.stopPropagation();
   if (it.classList.contains("disabled")) return;
@@ -857,6 +1038,7 @@ $$(".dd-item").forEach(it => it.onclick = e => {
   else if (a === "sched-start") setRunning(true);
   else if (a === "sched-stop") setRunning(false);
   else if (a === "about") doAbout();
+  dd.classList.remove("open");
 });
 $("#btn-import").onclick = doImport;
 $("#btn-apply").onclick = doApply;
@@ -866,6 +1048,15 @@ $("#btn-stop").onclick = () => setRunning(false);
 $("#btn-save").onclick = () => status("Settings saved", 4000);
 $("#btn-detect").onclick = () => status("Location detected — review and press Save to apply", 6000);
 $$("[data-cbx]").forEach(c => c.onclick = () => c.classList.toggle("on"));
+$("#btn-min").onclick = () => status("Minimize (mockup)");
+$("#btn-max").onclick = () => status("Maximize (mockup)");
+$("#btn-close").onclick = () => status("Close (mockup) — in the app this hides to the tray");
+// mockup-only: Breeze light/dark switch
+$$("#theme-toggle button").forEach(b => b.onclick = () => {
+  $$("#theme-toggle button").forEach(x => x.classList.remove("active"));
+  b.classList.add("active");
+  document.body.dataset.theme = b.dataset.mode;
+});
 window.addEventListener("resize", () => { buildRuler(); });
 
 // ── init ──────────────────────────────────────────────────────────────

@@ -1,11 +1,12 @@
-// schedulepreview.cpp — see schedulepreview.hpp (kWallpaper timeline port).
+// schedulepreview.cpp — see schedulepreview.hpp (redesign mockup timeline).
 
 #include "schedulepreview.hpp"
 
+#include <algorithm>
 #include <QDateTime>
 #include <QFileInfo>
+#include <QFontMetrics>
 #include <QImageReader>
-#include <QFontDatabase>
 #include <QHBoxLayout>
 #include <QMouseEvent>
 #include <QPainter>
@@ -16,46 +17,55 @@
 #include <QThreadPool>
 #include <QVBoxLayout>
 
+#include "imageworkers.hpp"
+#include "style.hpp"
 #include "themes.hpp"
 
 namespace johona::gui {
 
 namespace {
 
-// Geometry (px) — kWallpaper schedule_preview.py constants, compressed
-// vertically at the user's request (120 → 97 px total).
-constexpr int kHeadH = 18;
+// Geometry (px) — mockup .timeline: 54 px tall, 14 px ruler, bands at
+// top 17 px with 26 px height.
+constexpr int kHeadH = 20;
 constexpr int kRulerH = 14;
-constexpr int kRulerGap = 3;
-constexpr int kStripH = 32;
-constexpr int kBarH = kRulerH + kRulerGap + kStripH;  // 49
-constexpr int kMarginX = 8;
-constexpr int kMarginY = 4;
-constexpr int kSpacing = 2;
-constexpr int kWidgetH = kMarginY * 2 + kHeadH + kSpacing + kBarH + kSpacing + 18;  // 97
+constexpr int kBandTop = 17;
+constexpr int kBandH = 26;
+constexpr int kBarH = 54;
+constexpr int kSpacing = 6;
+constexpr int kFootH = 16;
+constexpr int kWidgetH = kHeadH + kSpacing + kBarH + kSpacing + kFootH;  // 102
 
-constexpr int kThumbPx = 24;
+constexpr int kThumbPx = 16;
+constexpr double kThumbRadius = 3.5;
 constexpr int kThumbCachePx = kThumbPx * 4;  // 4× headroom for HiDPI
 constexpr int kTickMs = 60000;
 
-// (fill, border) — subtle tints that read on both light and dark Base.
+// (band fill, band border, legend fill, legend border) — mockup tints.
 struct SegColor {
-    QColor fill;
-    QColor border;
+    QColor bandFill;
+    QColor bandBorder;
+    QColor legendFill;
+    QColor legendBorder;
 };
 const SegColor& segColor(const QString& type) {
     static const QHash<QString, SegColor> colors = {
         {"night",
-         {QColor(0x55, 0x66, 0x88, 0x22), QColor(0x55, 0x66, 0x88, 0x59)}},
+         {QColor(0x55, 0x66, 0x88, 38), QColor(0x55, 0x66, 0x88, 128),
+          QColor(0x55, 0x66, 0x88, 77), QColor(0x55, 0x66, 0x88, 166)}},
         {"sunrise",
-         {QColor(0xF5, 0xC2, 0x6B, 0x2B), QColor(0xF5, 0xC2, 0x6B, 0x66)}},
+         {QColor(0xF5, 0xC2, 0x6B, 46), QColor(0xF5, 0xC2, 0x6B, 166),
+          QColor(0xF5, 0xC2, 0x6B, 89), QColor(0xF5, 0xC2, 0x6B, 204)}},
         {"day",
-         {QColor(0x7E, 0xC8, 0xF0, 0x22), QColor(0x7E, 0xC8, 0xF0, 0x59)}},
+         {QColor(0x7E, 0xC8, 0xF0, 38), QColor(0x7E, 0xC8, 0xF0, 153),
+          QColor(0x7E, 0xC8, 0xF0, 77), QColor(0x7E, 0xC8, 0xF0, 179)}},
         {"sunset",
-         {QColor(0xF0, 0x95, 0x5A, 0x2B), QColor(0xF0, 0x95, 0x5A, 0x66)}},
+         {QColor(0xF0, 0x95, 0x5A, 46), QColor(0xF0, 0x95, 0x5A, 166),
+          QColor(0xF0, 0x95, 0x5A, 89), QColor(0xF0, 0x95, 0x5A, 204)}},
     };
     static const SegColor neutral{
-        QColor(0x7E, 0xC8, 0xF0, 0x22), QColor(0x7E, 0xC8, 0xF0, 0x59)};
+        QColor(0x7E, 0xC8, 0xF0, 38), QColor(0x7E, 0xC8, 0xF0, 153),
+        QColor(0x7E, 0xC8, 0xF0, 77), QColor(0x7E, 0xC8, 0xF0, 179)};
     auto it = colors.constFind(type);
     return it == colors.constEnd() ? neutral : it.value();
 }
@@ -74,6 +84,16 @@ const std::vector<int>& listFor(solar::Category c,
     case solar::Category::Night: return l.night;
     }
     return empty;
+}
+
+const char* segmentName(solar::Category c) {
+    switch (c) {
+    case solar::Category::Sunrise: return "sunrise";
+    case solar::Category::Day: return "day";
+    case solar::Category::Sunset: return "sunset";
+    case solar::Category::Night: return "night";
+    }
+    return "day";
 }
 
 struct ComputeResult {
@@ -135,6 +155,8 @@ ComputeResult computeSchedule(const config::Config& cfg,
                 ent.startMs = std::max(s, r.data.dayStartMs);
                 ent.endMs = std::min(e, r.data.dayEndMs);
                 ent.imageValue = list[i];
+                ent.listSize = static_cast<int>(list.size());
+                ent.segment = segmentName(win.category);
                 ent.path = themes::imageFileFor(themeDir, *dataOpt, list[i]);
                 r.data.entries.push_back(std::move(ent));
             }
@@ -156,24 +178,27 @@ ComputeResult computeSchedule(const config::Config& cfg,
     return r;
 }
 
-/// Decode one schedule thumbnail (long edge ≤ kThumbCachePx).  Worker.
+/// Decode one schedule thumbnail (long edge ≤ kThumbCachePx).  The
+/// downscale happens inside the decoder (setScaledSize), so no
+/// full-resolution buffer is ever allocated.  Worker.
 QImage decodeScheduleThumb(const QString& path) {
     QImageReader reader(path);
     reader.setAutoTransform(true);
-    QImage img = reader.read();
-    if (img.isNull())
-        return img;
-    const int longEdge = qMax(img.width(), img.height());
-    if (longEdge > kThumbCachePx) {
-        img = img.scaledToWidth(kThumbCachePx, Qt::SmoothTransformation);
+    const QSize sz = reader.size();
+    if (sz.isValid()) {
+        if (sz.width() >= sz.height())
+            reader.setScaledSize(QSize(kThumbCachePx, -1));
+        else
+            reader.setScaledSize(QSize(-1, kThumbCachePx));
     }
-    return img;
+    return reader.read();
 }
 
 // Legend geometry — shared by sizeHint() and paintEvent() so the widget is
 // always allocated exactly as wide as its content (a fixed width clips the
 // leftmost swatch when the font is wider than expected).
 constexpr int kLegendSw = 10;
+constexpr double kLegendSwRadius = 3;
 constexpr int kLegendGap = 5;
 constexpr int kLegendPad = 12;
 const char* kLegendNames[4] = {"night", "sunrise", "day", "sunset"};
@@ -184,6 +209,17 @@ int legendWidth(const QFontMetrics& fm) {
     for (int i = 0; i < 4; i++)
         total += kLegendSw + kLegendGap + fm.horizontalAdvance(kLegendLabels[i]);
     return total + kLegendPad * 3 + 2;  // +2 px left-edge safety
+}
+
+/// "America/Phoenix · 33.4484°N, 112.0740°W" (mockup footer right).
+QString locationText(const config::Config& cfg) {
+    const QString lat =
+        QString::number(qAbs(cfg.latitude), 'f', 4) +
+        (cfg.latitude >= 0 ? QStringLiteral("°N") : QStringLiteral("°S"));
+    const QString lon =
+        QString::number(qAbs(cfg.longitude), 'f', 4) +
+        (cfg.longitude >= 0 ? QStringLiteral("°E") : QStringLiteral("°W"));
+    return QStringLiteral("%1 · %2, %3").arg(cfg.timezone, lat, lon);
 }
 
 }  // namespace
@@ -197,8 +233,8 @@ public:
     }
 
     QSize sizeHint() const override {
-        QFont f = font();
-        f.setPointSize(qMax(f.pointSize(), 8));
+        QFont f;
+        f.setPixelSize(11);  // 10.5 px mockup
         return QSize(legendWidth(QFontMetrics(f)), kHeadH);
     }
 
@@ -207,8 +243,8 @@ protected:
         QPainter p(this);
         p.setRenderHint(QPainter::Antialiasing);
         const QPalette pal = palette();
-        QFont f = font();
-        f.setPointSize(qMax(f.pointSize(), 8));
+        QFont f;
+        f.setPixelSize(11);
         p.setFont(f);
         const QFontMetrics fm(f);
 
@@ -225,9 +261,10 @@ protected:
         for (int i = 0; i < 4; i++) {
             const SegColor c = segColor(kLegendNames[i]);
             QPainterPath path;
-            path.addRoundedRect(QRectF(x, y, kLegendSw, kLegendSw), 2, 2);
-            p.fillPath(path, c.fill);
-            p.setPen(QPen(c.border, 1));
+            path.addRoundedRect(QRectF(x, y, kLegendSw, kLegendSw),
+                                kLegendSwRadius, kLegendSwRadius);
+            p.fillPath(path, c.legendFill);
+            p.setPen(QPen(c.legendBorder, 1));
             p.drawPath(path);
             x += kLegendSw + kLegendGap;
             p.setPen(pal.color(QPalette::PlaceholderText));
@@ -237,7 +274,7 @@ protected:
     }
 };
 
-// ── Bar (ruler + strip + marker) ─────────────────────────────────────────
+// ── Bar (ruler + segment bands + marker) ─────────────────────────────────
 
 class ScheduleBar : public QWidget {
 public:
@@ -262,7 +299,15 @@ protected:
         p.setRenderHint(QPainter::Antialiasing);
         const int w = width(), h = height();
         const QPalette pal = palette();
+        const auto& tok = style::current();
         const auto state = m_owner->m_state;
+
+        const QRectF outer = QRectF(0.5, 0.5, w - 1, h - 1);
+        QPainterPath bg;
+        bg.addRoundedRect(outer, 6, 6);
+        p.fillPath(bg, QColor(tok.frameBg));
+        p.setPen(QPen(QColor(tok.midlight), 1));
+        p.drawPath(bg);
 
         if (state != SchedulePreview::State::Ready) {
             QString msg;
@@ -279,13 +324,16 @@ protected:
             case SchedulePreview::State::Ready:
                 break;
             }
+            p.setClipPath(bg);
             p.setPen(pal.color(QPalette::PlaceholderText));
-            QFont f = p.font();
-            f.setPointSize(qMax(f.pointSize(), 9));
+            QFont f;
+            f.setPixelSize(11);
             p.setFont(f);
             p.drawText(rect(), Qt::AlignCenter, msg);
             return;
         }
+
+        p.setClipPath(bg);
 
         const SchedulePreview::ScheduleData& sch = m_owner->m_data;
         const double span = sch.dayEndMs - sch.dayStartMs;
@@ -294,14 +342,14 @@ protected:
                                     span * width());
         };
 
-        const QColor midLight = pal.color(QPalette::Midlight);
-        const QColor mid = pal.color(QPalette::Mid);
+        const QColor midLight(tok.midlight);
+        const QColor mid(tok.mid);
 
         // ── hour ruler ──────────────────────────────────────────────────
         p.setPen(QPen(midLight, 1));
         p.drawLine(0, kRulerH - 1, w, kRulerH - 1);
-        QFont f = p.font();
-        f.setPointSize(qMax(f.pointSize(), 8));
+        QFont f;
+        f.setPixelSize(9);
         p.setFont(f);
         for (int hour = 0; hour <= 24; hour++) {
             const int x = xFor(sch.dayStartMs + hour * 3600000.0);
@@ -315,26 +363,53 @@ protected:
             }
         }
 
-        // ── image-window segments ───────────────────────────────────────
-        const int stripY = kRulerH + kRulerGap;
-        for (const auto& e : sch.entries) {
-            const int x1 = xFor(e.startMs);
-            const int x2 = xFor(e.endMs);
-            if (x2 - x1 < 3)
+        // ── segment bands (grouped consecutive entries) ─────────────────
+        struct Band {
+            int first;
+            int last;
+        };
+        QList<Band> bands;
+        for (std::size_t i = 0; i < sch.entries.size(); i++) {
+            if (bands.isEmpty() ||
+                sch.entries[i].segment != sch.entries[bands.last().last].segment)
+                bands.append({static_cast<int>(i), static_cast<int>(i)});
+            else
+                bands.last().last = static_cast<int>(i);
+        }
+
+        QFont labelFont;
+        labelFont.setPixelSize(10);  // 9.5 px mockup
+        const QFontMetrics labelFm(labelFont);
+
+        for (const Band& b : bands) {
+            const auto& e1 = sch.entries[b.first];
+            const auto& e2 = sch.entries[b.last];
+            const int x1 = xFor(e1.startMs);
+            const int x2 = xFor(e2.endMs);
+            if (x2 - x1 < 4)
                 continue;
-            const QRectF r(x1 + 1, stripY, x2 - x1 - 3, kStripH);
-            const SegColor c =
-                segColor(SchedulePreview::segmentTypeFor(e.startMs,
-                                                         sch.segments));
+            const QRectF bandR(x1, kBandTop, x2 - x1, kBandH);
+            const SegColor c = segColor(e1.segment);
             QPainterPath path;
-            path.addRoundedRect(r, 3, 3);
-            p.fillPath(path, c.fill);
-            p.setPen(QPen(c.border, 1));
+            path.addRoundedRect(bandR, 4, 4);
+            p.fillPath(path, c.bandFill);
+            p.setPen(QPen(c.bandBorder, 1));
             p.drawPath(path);
 
-            const int tx = x1 + 1 + 5;
-            const int ty = stripY + (kStripH - kThumbPx) / 2;
-            if (r.width() > kThumbPx + 12) {
+            // 16 px rounded thumbnails at each image's window.
+            const int ty = kBandTop + (kBandH - kThumbPx) / 2;
+            for (int j = b.first; j <= b.last; j++) {
+                const auto& e = sch.entries[j];
+                const int ex1 = xFor(e.startMs);
+                const int ex2 = xFor(e.endMs);
+                if (ex2 - ex1 < 2)
+                    continue;
+                const double cx = (ex1 + ex2) / 2.0;
+                const int tx =
+                    qBound<int>(x1 + 3, static_cast<int>(cx) - kThumbPx / 2,
+                                x2 - 3 - kThumbPx);
+                if (tx < x1 + 3 || tx + kThumbPx > x2 - 3)
+                    continue;
                 auto pmIt = m_owner->m_pixmaps.constFind(e.path);
                 if (pmIt != m_owner->m_pixmaps.constEnd()) {
                     // "Cover" fill: scale to expand over the square and
@@ -344,39 +419,39 @@ protected:
                         Qt::KeepAspectRatioByExpanding,
                         Qt::SmoothTransformation);
                     QPainterPath tp;
-                    tp.addRoundedRect(QRectF(tx, ty, kThumbPx, kThumbPx), 3, 3);
+                    tp.addRoundedRect(QRectF(tx, ty, kThumbPx, kThumbPx),
+                                      kThumbRadius, kThumbRadius);
                     p.save();
                     p.setClipPath(tp);
                     const int ox = tx + (kThumbPx - scaled.width()) / 2;
                     const int oy = ty + (kThumbPx - scaled.height()) / 2;
                     p.drawPixmap(ox, oy, scaled);
                     p.restore();
-                    p.setPen(QPen(QColor(0, 0, 0, 64), 1));
+                    p.setPen(QPen(QColor(0, 0, 0, 102), 1));  // rgba(0,0,0,.4)
                     p.drawPath(tp);
                 } else {
                     p.setPen(QPen(mid, 1));
-                    p.drawRoundedRect(QRectF(tx, ty, kThumbPx, kThumbPx), 3, 3);
+                    p.drawRoundedRect(QRectF(tx, ty, kThumbPx, kThumbPx),
+                                      kThumbRadius, kThumbRadius);
                 }
-                // Time range (only when there is room).
-                if (r.width() > kThumbPx + 12 + 64) {
-                    p.setPen(pal.color(QPalette::WindowText));
-                    QFont tf = p.font();
-                    tf.setPointSize(qMax(tf.pointSize(), 9));
-                    p.setFont(tf);
-                    const QRectF textR(
-                        tx + kThumbPx + 6, stripY,
-                        r.width() - (tx - r.x()) - kThumbPx - 12, kStripH);
-                    p.drawText(
-                        textR,
-                        Qt::AlignVCenter | Qt::AlignLeft,
-                        QStringLiteral("%1–%2")
-                            .arg(wallClock(e.startMs, sch.tz),
-                                 wallClock(e.endMs, sch.tz)));
+                // Time range (only when there is room next to the chip).
+                const QString range =
+                    QStringLiteral("%1–%2")
+                        .arg(wallClock(e.startMs, sch.tz),
+                             wallClock(e.endMs, sch.tz));
+                const int lw = labelFm.horizontalAdvance(range);
+                if (tx + kThumbPx + 6 + lw <= x2 - 4) {
+                    const QColor wt = pal.color(QPalette::WindowText);
+                    p.setPen(QColor(wt.red(), wt.green(), wt.blue(), 217));
+                    p.setFont(labelFont);
+                    const QRectF textR(tx + kThumbPx + 6, kBandTop,
+                                       x2 - (tx + kThumbPx + 6) - 4, kBandH);
+                    p.drawText(textR, Qt::AlignVCenter | Qt::AlignLeft, range);
                 }
             }
         }
 
-        // ── current-time marker (slider-handle style) ───────────────────
+        // ── current-time marker (2 px line + dot + time chip) ───────────
         if (m_owner->m_nowMs > 0.0) {
             const int mx = xFor(m_owner->m_nowMs);
             const QColor hl = pal.color(QPalette::Highlight);
@@ -384,15 +459,15 @@ protected:
             p.drawLine(mx, 0, mx, h);
             p.setPen(QPen(pal.color(QPalette::Base), 2));
             p.setBrush(hl);
-            p.drawEllipse(QPointF(mx, 6), 4, 4);
+            p.drawEllipse(QPointF(mx, 7), 4, 4);
             const QString label = wallClock(m_owner->m_nowMs, sch.tz);
-            QFont cf = p.font();
-            cf.setPointSize(qMax(cf.pointSize(), 8));
+            QFont cf;
+            cf.setPixelSize(9);
             cf.setBold(true);
             p.setFont(cf);
             const int tw = QFontMetrics(cf).horizontalAdvance(label) + 10;
             const int cx = (mx + 7 + tw < w) ? mx + 7 : mx - 7 - tw;
-            const QRectF chip(cx, 1, tw, 15);
+            const QRectF chip(cx, 1, tw, 13);
             QPainterPath cp;
             cp.addRoundedRect(chip, 3, 3);
             p.fillPath(cp, hl);
@@ -413,16 +488,16 @@ SchedulePreview::SchedulePreview(QWidget* parent)
     setMinimumWidth(400);
 
     auto* lay = new QVBoxLayout(this);
-    lay->setContentsMargins(kMarginX, kMarginY, kMarginX, kMarginY);
+    lay->setContentsMargins(0, 0, 0, 0);
     lay->setSpacing(kSpacing);
 
     auto* head = new QHBoxLayout();
     head->setContentsMargins(0, 0, 0, 0);
     head->setSpacing(8);
-    auto* title = new QLabel(QStringLiteral("Schedule"), this);
+    auto* title = new QLabel(QStringLiteral("Today's schedule"), this);
     QFont tf = title->font();
-    tf.setPointSize(qMax(tf.pointSize(), 9));
-    tf.setWeight(QFont::DemiBold);
+    tf.setPixelSize(13);  // 12.5 px mockup
+    tf.setWeight(QFont::Bold);
     title->setFont(tf);
     head->addWidget(title);
     head->addStretch(1);
@@ -433,21 +508,32 @@ SchedulePreview::SchedulePreview(QWidget* parent)
     m_bar = new ScheduleBar(this);
     lay->addWidget(m_bar);
 
-    m_foot = new QLabel(QString(), this);
-    QFont ff = m_foot->font();
-    ff.setPointSize(qMax(ff.pointSize(), 8));
-    m_foot->setFont(ff);
-    QPalette fpal = m_foot->palette();
+    auto* foot = new QHBoxLayout();
+    foot->setContentsMargins(0, 0, 0, 0);
+    foot->setSpacing(10);
+    m_footNow = new QLabel(QString(), this);
+    m_footLoc = new QLabel(QString(), this);
+    QFont ff;
+    ff.setPixelSize(11);
+    m_footNow->setFont(ff);
+    m_footLoc->setFont(ff);
+    QPalette fpal = m_footNow->palette();
     fpal.setColor(QPalette::WindowText, fpal.color(QPalette::PlaceholderText));
-    m_foot->setPalette(fpal);
-    lay->addWidget(m_foot);
+    m_footNow->setPalette(fpal);
+    m_footLoc->setPalette(fpal);
+    m_footLoc->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    foot->addWidget(m_footNow, 1);
+    foot->addWidget(m_footLoc);
+    lay->addLayout(foot);
 
     m_timer.setInterval(kTickMs);
     connect(&m_timer, &QTimer::timeout, this, &SchedulePreview::onTick);
     m_timer.start();
 }
 
-QSize SchedulePreview::sizeHint() const { return QSize(800, kWidgetH); }
+QSize SchedulePreview::sizeHint() const {
+    return QSize(800, kWidgetH);
+}
 
 void SchedulePreview::refresh(const config::Config& cfg,
                               const QString& themeDir) {
@@ -458,14 +544,14 @@ void SchedulePreview::refresh(const config::Config& cfg,
     m_data = ScheduleData{};
     m_nowMs = 0.0;
     m_pixmaps.clear();
-    m_loadingThumbs.clear();
-    m_foot->setText(QString());
+    m_footNow->setText(QString());
+    m_footLoc->setText(locationText(cfg));
     m_bar->update();
 
     const int token = m_token;
     const double nowMs = QDateTime::currentMSecsSinceEpoch();
     QPointer<SchedulePreview> guard = this;
-    QThreadPool::globalInstance()->start(
+    imageDecodePool()->start(
         [guard, token, cfg, themeDir, nowMs]() {
             const ComputeResult res = computeSchedule(cfg, themeDir, nowMs);
             if (!guard)
@@ -496,9 +582,9 @@ void SchedulePreview::clear() {
     m_data = ScheduleData{};
     m_nowMs = 0.0;
     m_pixmaps.clear();
-    m_loadingThumbs.clear();
     m_themeDir.clear();
-    m_foot->setText(QString());
+    m_footNow->setText(QString());
+    m_footLoc->setText(QString());
     m_bar->setToolTip(QString());
     m_bar->update();
 }
@@ -527,8 +613,8 @@ void SchedulePreview::onScheduleReady(int token, ScheduleData data,
     if (!error.isEmpty()) {
         m_state = State::Error;
         m_data = ScheduleData{};
-        m_error = error;
-        m_foot->setText(QString());
+        m_footNow->setText(QString());
+        m_footLoc->setText(locationText(m_cfg));
         m_bar->setToolTip(error);
         m_bar->update();
         return;
@@ -546,7 +632,7 @@ void SchedulePreview::onScheduleReady(int token, ScheduleData data,
     if (!paths.isEmpty()) {
         const int thumbToken = m_token;
         QPointer<SchedulePreview> guard = this;
-        QThreadPool::globalInstance()->start(
+        imageDecodePool()->start(
             [guard, thumbToken, paths]() {
                 QHash<QString, QImage> thumbs;
                 for (const QString& p : paths)
@@ -579,10 +665,11 @@ void SchedulePreview::onThumbsReady(int token, QHash<QString, QImage> thumbs) {
 }
 
 QString SchedulePreview::entryText(const Entry& e) const {
-    QString text = QStringLiteral("%1–%2  ·  image %3")
+    QString text = QStringLiteral("%1–%2  ·  image %3 of %4")
                        .arg(wallClock(e.startMs, m_data.tz))
                        .arg(wallClock(e.endMs, m_data.tz))
-                       .arg(e.imageValue);
+                       .arg(e.imageValue)
+                       .arg(e.listSize);
     if (!e.path.isEmpty())
         text += QStringLiteral("  ·  %1").arg(QFileInfo(e.path).fileName());
     return text;
@@ -590,12 +677,12 @@ QString SchedulePreview::entryText(const Entry& e) const {
 
 void SchedulePreview::updateFooter() {
     if (m_state != State::Ready) {
-        m_foot->setText(QString());
+        m_footNow->setText(QString());
         return;
     }
     auto e = entryAt(static_cast<int>(xFor(m_nowMs)));
-    m_foot->setText(e ? QStringLiteral("Now: %1").arg(entryText(*e))
-                      : QString());
+    m_footNow->setText(e ? QStringLiteral("Now: %1").arg(entryText(*e))
+                         : QString());
 }
 
 void SchedulePreview::showEntryAt(int x) {
@@ -604,7 +691,7 @@ void SchedulePreview::showEntryAt(int x) {
     auto e = entryAt(x);
     if (e) {
         const QString text = entryText(*e);
-        m_foot->setText(text);
+        m_footNow->setText(text);
         m_bar->setToolTip(text);
     } else {
         resetFooter();
@@ -633,22 +720,6 @@ std::optional<SchedulePreview::Entry> SchedulePreview::entryAt(int x) const {
         if (e.startMs <= t && t < e.endMs)
             return e;
     return std::nullopt;
-}
-
-QString SchedulePreview::segmentTypeFor(double startMs,
-                                        const solar::Segments& seg) {
-    // "night" outside [dawn, dusk), "sunrise" in the morning golden window,
-    // "day" between the golden windows, "sunset" in the evening golden
-    // window.  "day" (neutral) when segments are unavailable.
-    if (!seg.complete())
-        return QStringLiteral("day");
-    if (startMs < *seg.dawn || startMs >= *seg.dusk)
-        return QStringLiteral("night");
-    if (startMs < *seg.goldenHourEnd)
-        return QStringLiteral("sunrise");
-    if (startMs < *seg.goldenHour)
-        return QStringLiteral("day");
-    return QStringLiteral("sunset");
 }
 
 }  // namespace johona::gui

@@ -1,13 +1,14 @@
-// schedulepreview.hpp — kWallpaper SchedulePreviewWidget parity: a 24-hour
-// timeline of the selected theme's image schedule (WDD sun-position model).
+// schedulepreview.hpp — 24-hour schedule timeline (redesign mockup).
 //
-//  Header: "Schedule" title + right-aligned segment legend (4 swatches)
-//  Ruler:  minor ticks hourly, major every 3 h with "00".."21" labels
-//  Strip:  one rounded, tinted window per image (28 px cover-cropped
-//          thumbnail + "HH:MM–HH:MM" where they fit)
-//  Marker: slider-handle current-time marker (line + dot + time chip)
-//  Footer: "Now: HH:MM–HH:MM · image N · filename" (hover shows the
-//          window under the cursor)
+//  Header: "Today's schedule" title + right-aligned segment legend
+//          (4 rounded swatches, mockup tints)
+//  Ruler:  minor ticks hourly, major every 3 h with 2-digit labels
+//  Bands:  one rounded, tinted band per sun segment; 16 px rounded image
+//          thumbnails at each image's display window ("HH:MM–HH:MM" where
+//          it fits)
+//  Marker: 2 px highlight line + white-rimmed dot + blue time chip
+//  Footer: "Now: HH:MM–HH:MM · image N of M · file.jpg" left,
+//          "Timezone · lat/lon" right
 //
 // All computation runs off the GUI thread (QThreadPool) with a version
 // token for cancellation; a 60 s timer refreshes the marker and
@@ -41,8 +42,10 @@ public:
     struct Entry {
         double startMs = 0.0;  // clamped to the bar, epoch ms
         double endMs = 0.0;
-        int imageValue = 0;
-        QString path;  // "" → placeholder box
+        int imageValue = 0;    // 1-based position in the category list
+        int listSize = 0;      // images in that category's list
+        QString segment;       // "night"|"sunrise"|"day"|"sunset"
+        QString path;          // "" → placeholder box
     };
 
     struct ScheduleData {
@@ -81,7 +84,6 @@ private:
     double xFor(double epochMs) const;
     std::optional<Entry> entryAt(int x) const;
     QString entryText(const Entry& e) const;
-    static QString segmentTypeFor(double startMs, const solar::Segments& seg);
 
     config::Config m_cfg;
     QString m_themeDir;
@@ -89,15 +91,14 @@ private:
     State m_state = State::Empty;
     ScheduleData m_data;
     double m_nowMs = 0.0;
-    QHash<QString, QPixmap> m_pixmaps;  // path → ≤112 px thumbnail
-    QSet<QString> m_loadingThumbs;
-    QString m_error;
+    QHash<QString, QPixmap> m_pixmaps;  // path → ≤64 px thumbnail
 
     QTimer m_timer;  // 60 s: marker refresh + date-change check
 
     ScheduleLegend* m_legend = nullptr;
     ScheduleBar* m_bar = nullptr;
-    QLabel* m_foot = nullptr;
+    QLabel* m_footNow = nullptr;   // left: "Now: …" (or hovered entry)
+    QLabel* m_footLoc = nullptr;   // right: "Timezone · lat/lon"
 };
 
 }  // namespace johona::gui

@@ -70,6 +70,7 @@ private slots:
     void imageFilesFor_numberedFallback();
     void imageFileFor_wraparound();
     void testValidateThemeImages();
+    void prettyThemeName_stripsTrailingYear();
     void normalizeImageLists_tahoe();
     void testDiscoverThemes();
     void importTheme_success();
@@ -184,6 +185,29 @@ void TestThemes::testValidateThemeImages() {
     data.dayImageList = {2};
     data.nightImageList = {3};
     QVERIFY(validateThemeImages(dir, data).empty());
+}
+
+void TestThemes::prettyThemeName_stripsTrailingYear() {
+    // Trailing year (and year-index) is stripped.
+    QCOMPARE(prettyThemeName("California Highland Lakes 2023",
+                             "24hr-California-Highland-Lakes-2023"),
+             QString("California Highland Lakes"));
+    QCOMPARE(prettyThemeName("Tahoe 2026", "x"), QString("Tahoe"));
+    QCOMPARE(prettyThemeName("Bangkok 2025-1", "x"), QString("Bangkok"));
+    QCOMPARE(prettyThemeName("The Great Wall 2026-2", "x"),
+             QString("The Great Wall"));
+    QCOMPARE(prettyThemeName("Los Angeles 2019", "x"), QString("Los Angeles"));
+    QCOMPARE(prettyThemeName("Merdeka 118 2026", "x"), QString("Merdeka 118"));
+    // A mid-name year is part of the name and stays.
+    QCOMPARE(prettyThemeName("Chicago 2026 Mix", "x"),
+             QString("Chicago 2026 Mix"));
+    QCOMPARE(prettyThemeName("California Sf 2023 Mix", "x"),
+             QString("California Sf 2023 Mix"));
+    // No year: unchanged.
+    QCOMPARE(prettyThemeName("California Highland Lakes", "x"),
+             QString("California Highland Lakes"));
+    // Empty displayName falls back to the directory name.
+    QCOMPARE(prettyThemeName(QString(), "24hr-Foo"), QString("24hr-Foo"));
 }
 
 void TestThemes::normalizeImageLists_tahoe() {

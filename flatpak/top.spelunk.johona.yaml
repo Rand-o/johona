@@ -14,6 +14,11 @@ sdk: org.kde.Sdk//6.9
 command: johona
 finish-args:
   # GUI + rendering
+  # Force the generic platform theme: the KDE one is auto-loaded via the
+  # XDG_CURRENT_DESKTOP=KDE heuristic and pulls in KF6 + QtQuick + a GL
+  # context (~66 MiB RSS, +64 threads).  The app sets its own palettes and
+  # stylesheet, so the theme is not needed.  See the memory investigation.
+  - --env=QT_QPA_PLATFORMTHEME=generic
   - --share=ipc
   - --socket=session-bus
   - --socket=wayland

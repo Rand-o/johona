@@ -193,4 +193,146 @@ inline QIcon themeIcon(const QString& name, const char* fallbackSvg) {
     return icon;
 }
 
+// ── Color-tintable icons (redesign mockup line glyphs) ─────────────────
+// The mockup's nav/menu glyphs are monochrome line icons that must follow
+// the widget state (placeholder gray → white on the active nav pill), so
+// they are embedded as "currentColor" SVG templates and rendered in an
+// explicit color.  (QSvgRenderer has no currentColor support.)
+
+inline QIcon colorIcon(const char* svgTemplate, const QColor& color,
+                       int size = 24) {
+    QString svg = QString::fromUtf8(svgTemplate);
+    svg.replace(QStringLiteral("currentColor"), color.name());
+    return svgIcon(svg.toUtf8().constData(), size);
+}
+
+/// Nav: Themes (image).
+inline const char kNavThemesSvg[] = R"SVG(<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3.5" y="4.5" width="17" height="15" rx="2"/>
+    <circle cx="9" cy="10" r="1.6"/>
+    <path d="M4.5 17.5l4.5-4.5 3.5 3.5 3-3 4 4.5"/>
+  </g>
+</svg>)SVG";
+
+/// Nav: Scheduler (clock).
+inline const char kNavSchedulerSvg[] = R"SVG(<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+    <circle cx="12" cy="12" r="8.5"/>
+    <path d="M12 7.5V12l3 2"/>
+  </g>
+</svg>)SVG";
+
+/// Nav: Settings (gear).
+inline const char kNavSettingsSvg[] = R"SVG(<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+    <circle cx="12" cy="12" r="3.2"/>
+    <path d="M12 2.9v2.6M12 18.5v2.6M2.9 12h2.6M18.5 12h2.6M5.5 5.5l1.9 1.9M16.6 16.6l1.9 1.9M18.5 5.5l-1.9 1.9M7.4 16.6l-1.9 1.9"/>
+  </g>
+</svg>)SVG";
+
+/// Title bar: hamburger (three lines).
+inline const char kMenuHamburgerSvg[] = R"SVG(<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <line x1="4" y1="7" x2="20" y2="7"/>
+    <line x1="4" y1="12" x2="20" y2="12"/>
+    <line x1="4" y1="17" x2="20" y2="17"/>
+  </g>
+</svg>)SVG";
+
+/// Search field glyph (magnifier).
+inline const char kSearchSvg[] = R"SVG(<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <circle cx="10.5" cy="10.5" r="6"/>
+    <line x1="15.2" y1="15.2" x2="20" y2="20"/>
+  </g>
+</svg>)SVG";
+
+/// Check glyph (ACTIVE badge, Apply button).
+inline const char kCheckSvg[] = R"SVG(<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>)SVG";
+
+/// Play triangle (filled).
+inline const char kPlayFilledSvg[] = R"SVG(<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <path d="M7.5 5.5v13l11-6.5z" fill="currentColor"/>
+</svg>)SVG";
+
+/// Stop square (filled, rounded).
+inline const char kStopFilledSvg[] = R"SVG(<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <rect x="6.5" y="6.5" width="11" height="11" rx="1.5" fill="currentColor"/>
+</svg>)SVG";
+
+/// Refresh / next-wallpaper (two arrows).
+inline const char kRefreshSvg[] = R"SVG(<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4.5 12a7.5 7.5 0 0 1 13-5.1M19.5 12a7.5 7.5 0 0 1-13 5.1"/>
+    <path d="M17.5 3.5v3.6h-3.6M6.5 20.5v-3.6h3.6"/>
+  </g>
+</svg>)SVG";
+
+/// Trash (delete theme).
+inline const char kTrashSvg[] = R"SVG(<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4.5 7h15M9.5 7V5h5v2M7 7l1 13h8l1-13"/>
+    <line x1="10.5" y1="11" x2="10.5" y2="16.5"/>
+    <line x1="13.5" y1="11" x2="13.5" y2="16.5"/>
+  </g>
+</svg>)SVG";
+
+/// Import (tray + down arrow).
+inline const char kImportSvg[] = R"SVG(<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 4v10M8 10.5l4 4 4-4"/>
+    <path d="M5 19h14"/>
+  </g>
+</svg>)SVG";
+
+/// Save (document with fold).
+inline const char kSaveSvg[] = R"SVG(<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 4h11l3.5 3.5V20H5z"/>
+    <path d="M8 4v4.5h7V4M8 20v-6h8v6"/>
+  </g>
+</svg>)SVG";
+
+/// Location pin.
+inline const char kLocationSvg[] = R"SVG(<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 21s-6.5-5.4-6.5-10a6.5 6.5 0 0 1 13 0c0 4.6-6.5 10-6.5 10z"/>
+    <circle cx="12" cy="10.8" r="2.4"/>
+  </g>
+</svg>)SVG";
+
+/// About (info circle).
+inline const char kAboutSvg[] = R"SVG(<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+    <circle cx="12" cy="12" r="8.5"/>
+    <line x1="12" y1="11" x2="12" y2="16.5"/>
+    <circle cx="12" cy="7.8" r="0.4" fill="currentColor"/>
+  </g>
+</svg>)SVG";
+
+/// Quit (door + arrow).
+inline const char kExitSvg[] = R"SVG(<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 4.5H5.5v15H10M6 12h9M14.5 8.5L18 12l-3.5 3.5"/>
+  </g>
+</svg>)SVG";
+
 }  // namespace johona::gui

@@ -99,12 +99,15 @@ johona/
 │   │   └── clock.hpp             # injectable clock (deterministic tests)
 │   └── gui/                  # Qt Widgets frontend
 │       ├── main.cpp                # single instance, engine on a QThread
-│       ├── mainwindow.*            # tabs, tray, appearance, status bar
-│       ├── themestab.*             # list + cross-fade preview + schedule preview
-│       ├── schedulepreview.*       # 24 h timeline with thumbnails
-│       ├── previewwidget.*         # thumbnail cross-fade (LRU cache, 512 MB)
-│       ├── settstab.*              # scheduler/backend/location/appearance/autostart
-│       ├── schedulertab.*          # start/stop, status, event log
+│       ├── mainwindow.*            # title bar + hamburger menu, sidebar nav,
+│       │                           #   stacked pages, slim status bar, tray
+│       ├── themestab.*             # theme card list + delegate, preview panel
+│       ├── schedulepreview.*       # 24 h timeline with segment bands
+│       ├── previewwidget.*         # thumbnail cross-fade (LRU cache, overlay chip)
+│       ├── settstab.*              # card-based settings with switches
+│       ├── schedulertab.*          # status hero + filtered event log
+│       ├── style.hpp               # Breeze 6.7 tokens + app stylesheet
+│       ├── widgets.{hpp,cpp}       # StatusDot, NavItem, StatusMessageLabel
 │       └── enginebridge.hpp        # queued-call bridge (QPromise/QFuture)
 ├── tests/                    # 9 suites, 95 tests (QtTest, ctest)
 ├── data/                     # icons, .desktop, metainfo, autostart template

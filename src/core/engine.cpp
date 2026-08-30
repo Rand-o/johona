@@ -211,6 +211,7 @@ ApplyOutcome Engine::applyCurrent(bool dailyAdvance, const QString& forcedTheme)
         return out;
     }
     out.themeName = themeName;
+    out.themeDisplayName = themes::prettyThemeName(data->displayName, themeName);
     out.imagePath = QFileInfo(imagePath).absoluteFilePath();
     out.category = solar::categoryName(sel->category);
 
@@ -290,7 +291,7 @@ ApplyOutcome Engine::applyCurrent(bool dailyAdvance, const QString& forcedTheme)
                             .arg(themeName, QFileInfo(out.imagePath).fileName(),
                                  out.category);
     m_pendingFailure = false;
-    emit applied(themeName, out.imagePath, out.category);
+    emit applied(themeName, out.themeDisplayName, out.imagePath, out.category);
     emit statusChanged(out.message);
     emit logMessage(out.message);
     return out;
@@ -349,16 +350,22 @@ std::pair<QDateTime, QString> Engine::nextBoundary() const {
     const auto seg =
         solar::segmentsForNow(now, nowLocal().date(), timezone(), m_config.latitude,
                               m_config.longitude, lists);
-    int currentIndex = -1;
+    // Pass the image *value* (theme.json number), not the list position:
+    // nextChangeTime() locates the value in the category lists.  Passing
+    // the position instead makes it match a different image in another
+    // list (e.g. position 1 vs. value 1 in the night list), which can
+    // re-arm a boundary hours away and skip the remaining changes of the
+    // day.
+    int currentImage = -1;
     if (auto sel = solar::imageAt(now, seg, lists))
-        currentIndex = sel->index;
+        currentImage = sel->imageValue;
     auto next = solar::nextChangeTime(
         now, seg, lists,
         [this](const QDate& d) {
             return solar::segmentsForDay(d, timezone(), m_config.latitude,
                                          m_config.longitude);
         },
-        currentIndex);
+        currentImage);
     if (!next)
         return {{}, {}};
 

@@ -29,6 +29,14 @@ QFuture<T> call(QObject* obj, std::function<T()> fn) {
                 p->addResult(fn());
             else
                 p->addResult(T{});  // engine gone (shutdown) — complete empty
+            // finish() completes the future so QFuture::then continuations
+            // run.  Do NOT rely on the QPromise destructor: its
+            // cancelAndFinish() marks the future *canceled*, and Qt's
+            // continuation machinery then propagates the cancellation
+            // instead of invoking the callback (the future would never
+            // deliver a result).
+            p->finish();
+            delete p;
         },
         Qt::QueuedConnection);
     promise.release();  // the queued lambda owns it now

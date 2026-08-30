@@ -1,14 +1,18 @@
-// themestab.hpp — Themes tab (kWallpaper ThemesPage parity): theme list,
-// Import…/Apply/Delete, cross-fade preview slideshow, "N images" and the
-// 24 h schedule preview.
+// themestab.hpp — Themes page (redesign mockup): header (title + count +
+// pill search + Import), single-column theme card list (QListWidget +
+// custom delegate, worker-pool 16:9 thumbnails), and the right panel
+// (name/meta + delete/apply, cross-fade preview with overlay chip,
+// "Today's schedule" card).
 
 #pragma once
 
 #include <QHash>
 #include <QLabel>
+#include <QLineEdit>
 #include <QListWidget>
+#include <QPixmap>
 #include <QPushButton>
-#include <QSplitter>
+#include <QSet>
 #include <QStringList>
 #include <QWidget>
 
@@ -34,7 +38,7 @@ public:
     /// Scheduler running state: Delete is disabled (with the red warning)
     /// while the scheduler runs (kWallpaper parity).
     void setSchedulerRunning(bool running);
-    /// Start/stop the preview slideshow with tab visibility.
+    /// Start/stop the preview slideshow with page visibility.
     void setTabVisible(bool visible);
 
     /// Menu "Import Theme…" target.
@@ -48,6 +52,7 @@ private slots:
     void onApply();
     void onDelete();
     void onSelectionChanged();
+    void onSearchTextChanged(const QString& text);
 
 private:
     void importTheme();
@@ -55,18 +60,34 @@ private:
     void setBusy(QPushButton* btn, bool busy);
     void refreshSchedule();
     QStringList imagesFor(const QString& themePath) const;
+    void applyFilter();
+    void updateEmptyState();
+    void requestThumbs();
+    void onThumbsReady(int token, QHash<QString, QPixmap> thumbs);
+    bool eventFilter(QObject* obj, QEvent* event) override;
 
     Engine* m_engine;
     config::Paths m_paths;
 
-    QSplitter* m_split;
-    QListWidget* m_list;
+    // Header
+    QLabel* m_countLabel;
+    QLineEdit* m_search;
     QPushButton* m_importBtn;
-    QPushButton* m_applyBtn;
-    QPushButton* m_deleteBtn;
+
+    // Card list
+    QListWidget* m_list;
+    QLabel* m_emptyLabel;
+    QHash<QString, QPixmap> m_thumbs;  // theme path → 16:9 card thumb
+    int m_thumbToken = 0;
+    QSet<QString> m_thumbLoading;
+
+    // Right panel
+    QLabel* m_nameLabel;
+    QLabel* m_metaLabel;
     QLabel* m_deleteWarning;
+    QPushButton* m_deleteBtn;
+    QPushButton* m_applyBtn;
     PreviewWidget* m_preview;
-    QLabel* m_previewInfo;
     SchedulePreview* m_schedule;
 
     mutable QHash<QString, QStringList> m_imageCache;

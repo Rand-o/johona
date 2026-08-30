@@ -13,6 +13,7 @@
 #include <QLocalServer>
 #include <QLocalSocket>
 #include <QMessageBox>
+#include <QStyleFactory>
 #include <QThread>
 #include <QTimer>
 
@@ -46,7 +47,19 @@ bool activateRunningInstance() {
 }  // namespace
 
 int main(int argc, char** argv) {
+    // Skip the KDE platform theme: it is auto-loaded via the
+    // XDG_CURRENT_DESKTOP=KDE heuristic even when QT_QPA_PLATFORMTHEME is
+    // set to a bogus name (themeNames() fallback), and it pulls in KF6 +
+    // QtQuick + a GL context (~66 MiB RSS, +64 threads).  "generic" is a
+    // real built-in theme name, so the fallback does not re-load the KDE
+    // plugin.  See the memory investigation.
+    qputenv("QT_QPA_PLATFORMTHEME", "generic");
     QApplication app(argc, argv);
+    // Force the Fusion style (built into Qt, no plugin): the KDE theme's
+    // breeze6.so style loads KirigamiPlatform + Qt6Quick as well.  The app
+    // sets its own palettes and a full stylesheet, so Fusion is a drop-in.
+    if (auto* fusion = QStyleFactory::create(QStringLiteral("Fusion")))
+        QApplication::setStyle(fusion);
     QCoreApplication::setOrganizationName(QStringLiteral("spelunk"));
     QCoreApplication::setApplicationName(QStringLiteral("johona"));
     QCoreApplication::setApplicationVersion(QStringLiteral("1.0.0"));

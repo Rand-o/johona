@@ -1,10 +1,15 @@
-// previewwidget.cpp — see previewwidget.hpp (kWallpaper cross-fade parity).
+// previewwidget.cpp — see previewwidget.hpp (kWallpaper cross-fade parity,
+// restyled to the redesign mockup: dark rounded letterbox + overlay chip).
 
 #include "previewwidget.hpp"
+
+#include "imageworkers.hpp"
+#include "style.hpp"
 
 #include <QHideEvent>
 #include <QImageReader>
 #include <QPainter>
+#include <QPainterPath>
 #include <QPalette>
 #include <QPen>
 #include <QPointer>
@@ -18,32 +23,32 @@ namespace {
 /// Decode `path` and scale its long edge down to `targetLongEdge`
 /// (smaller images are kept as-is).  Runs on a worker thread.
 ///
-/// NOTE: use scaledToWidth/scaledToHeight, not scaled(w, -1, …): the
-/// -1 aspect-ratio sentinel is broken in the KDE SDK's Qt 6.9.3 build
-/// (returns a null image for every input).
+/// The downscale happens inside the decoder (setScaledSize, verified
+/// working on this Qt 6.9.3, including the -1 aspect-ratio sentinel), so
+/// no full-resolution buffer is ever allocated.
 QImage decodeThumb(const QString& path, int targetLongEdge) {
     QImageReader reader(path);
     reader.setAutoTransform(true);
-    QImage img = reader.read();
-    if (img.isNull())
-        return img;
-    const int longEdge = qMax(img.width(), img.height());
-    if (longEdge > targetLongEdge) {
-        if (img.width() >= img.height())
-            img = img.scaledToWidth(targetLongEdge, Qt::SmoothTransformation);
+    const QSize sz = reader.size();
+    if (sz.isValid()) {
+        if (sz.width() >= sz.height())
+            reader.setScaledSize(QSize(targetLongEdge, -1));
         else
-            img = img.scaledToHeight(targetLongEdge, Qt::SmoothTransformation);
+            reader.setScaledSize(QSize(-1, targetLongEdge));
     }
-    return img;
+    return reader.read();
 }
+
+// Mockup .preview constants.
+constexpr int kRadius = 8;
+const QColor kLetterbox("#0a0d14");
 
 }  // namespace
 
 PreviewWidget::PreviewWidget(QWidget* parent)
     : QWidget(parent), m_anim(this, "blendValue", this), m_timer(this) {
-    setAutoFillBackground(true);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    setMinimumSize(320, 200);
+    setMinimumSize(320, 140);
 
     m_anim.setDuration(1200);  // 1.2 s cross-fade
     m_anim.setEasingCurve(QEasingCurve::InOutQuad);
@@ -73,8 +78,16 @@ void PreviewWidget::setImages(const QStringList& paths) {
     update();
 }
 
+void PreviewWidget::setThemeName(const QString& name) {
+    if (m_name == name)
+        return;
+    m_name = name;
+    update();
+}
+
 void PreviewWidget::clear() {
     m_running = false;
+    m_name.clear();
     setImages({});
 }
 
@@ -134,7 +147,7 @@ void PreviewWidget::request(int idx) {
     const QString path = m_paths[idx];
     const int target = desiredThumbSize();
     QPointer<PreviewWidget> guard = this;
-    QThreadPool::globalInstance()->start(
+    imageDecodePool()->start(
         [guard, token, idx, path, target]() {
             QImage img = decodeThumb(path, target);
             if (!guard)
@@ -298,42 +311,59 @@ void PreviewWidget::resizeEvent(QResizeEvent* event) {
 
 void PreviewWidget::paintEvent(QPaintEvent* event) {
     QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
     const QPalette pal = palette();
-    const QSize sz = size();
+    const QRectF outer = rect().adjusted(0.5, 0.5, -0.5, -0.5);
+    const double radius = qMin<double>(kRadius, qMin(outer.width(), outer.height()) / 2);
+
+    // Rounded clip: everything (letterbox, images, chip) stays inside.
+    QPainterPath clip;
+    clip.addRoundedRect(outer, radius, radius);
+    painter.setClipPath(clip);
+
+    const QColor frameOutline(style::current().frameOutline);
+
+    // Dark letterbox background (mockup .preview).
+    painter.fillRect(outer, kLetterbox);
 
     const int n = m_paths.size();
     const double blend = m_blend;
 
     if (n == 0) {
-        // Dashed placeholder.
-        QPen pen(pal.color(QPalette::Mid));
-        pen.setStyle(Qt::DashLine);
-        pen.setWidth(2);
-        painter.setPen(pen);
-        painter.drawRoundedRect(rect().adjusted(8, 8, -8, -8), 8, 8);
         painter.setPen(pal.color(QPalette::PlaceholderText));
-        painter.drawText(rect(), Qt::AlignCenter,
+        QFont f = painter.font();
+        f.setPixelSize(12);
+        painter.setFont(f);
+        painter.drawText(outer, Qt::AlignCenter,
                          QStringLiteral("Select a theme to preview"));
+        painter.setClipPath(QPainterPath());
+        painter.setPen(QPen(frameOutline, 1));
+        painter.drawRoundedRect(outer, radius, radius);
         return;
     }
 
     QPixmap cur = scaledFor(m_idx);
     if (cur.isNull()) {
         // Fast placeholder until the first background load arrives.
-        painter.fillRect(rect(), pal.color(QPalette::AlternateBase));
         painter.setPen(pal.color(QPalette::PlaceholderText));
-        painter.drawText(rect(), Qt::AlignCenter,
+        QFont f = painter.font();
+        f.setPixelSize(12);
+        painter.setFont(f);
+        painter.drawText(outer, Qt::AlignCenter,
                          QStringLiteral("Loading preview…"));
+        painter.setClipPath(QPainterPath());
+        painter.setPen(QPen(frameOutline, 1));
+        painter.drawRoundedRect(outer, radius, radius);
         return;
     }
 
     // The widget-sized pixmaps are HiDPI: their width()/height() are
-    // physical pixels while sz is logical — center with the logical size.
+    // physical pixels while rect() is logical — center with the logical size.
     double dpr = cur.devicePixelRatio();
     if (dpr <= 0)
         dpr = 1.0;
-    const int cx = (sz.width() - static_cast<int>(cur.width() / dpr)) / 2;
-    const int cy = (sz.height() - static_cast<int>(cur.height() / dpr)) / 2;
+    const int cx = (width() - static_cast<int>(cur.width() / dpr)) / 2;
+    const int cy = (height() - static_cast<int>(cur.height() / dpr)) / 2;
     painter.setOpacity(1.0 - blend);
     painter.drawPixmap(cx, cy, cur);
 
@@ -343,13 +373,70 @@ void PreviewWidget::paintEvent(QPaintEvent* event) {
             double ndpr = nxt.devicePixelRatio();
             if (ndpr <= 0)
                 ndpr = 1.0;
-            const int nx = (sz.width() - static_cast<int>(nxt.width() / ndpr)) / 2;
+            const int nx = (width() - static_cast<int>(nxt.width() / ndpr)) / 2;
             const int ny =
-                (sz.height() - static_cast<int>(nxt.height() / ndpr)) / 2;
+                (height() - static_cast<int>(nxt.height() / ndpr)) / 2;
             painter.setOpacity(blend);
             painter.drawPixmap(nx, ny, nxt);
         }
     }
+    painter.setOpacity(1.0);
+
+    // ── bottom-left glassy overlay chip (mockup .pv-overlay) ────────────
+    if (!m_name.isEmpty()) {
+        QFont f = painter.font();
+        f.setPixelSize(11);
+        QFont fBold = f;
+        fBold.setWeight(QFont::DemiBold);
+        const QFontMetrics fm(f);
+        const QFontMetrics fmB(fBold);
+        const QString countText =
+            QStringLiteral("%1 / %2").arg(currentIndex()).arg(n);
+        const int padX = 11, padY = 5, gap = 9, barW = 44, barH = 3;
+        const int textH = fm.height();
+        const int chipW = padX * 2 + fmB.horizontalAdvance(m_name) + gap +
+                          fm.horizontalAdvance(countText) + gap + barW;
+        const int chipH = padY * 2 + textH;
+        const int chipX = 10;
+        const int chipY = height() - 10 - chipH;
+        const QRectF chipR(chipX, chipY, chipW, chipH);
+
+        QPainterPath chipPath;
+        chipPath.addRoundedRect(chipR, 7, 7);
+        painter.fillPath(chipPath, QColor(8, 12, 18, 148));  // rgba(8,12,18,.58)
+        painter.setPen(QPen(QColor(255, 255, 255, 36), 1));  // rgba(255,255,255,.14)
+        painter.drawPath(chipPath);
+
+        const int ty = chipY + padY;
+        painter.setPen(Qt::white);
+        painter.setFont(fBold);
+        painter.drawText(chipX + padX, ty + fm.ascent(), m_name);
+        int tx = chipX + padX + fmB.horizontalAdvance(m_name) + gap;
+        painter.setPen(QColor(255, 255, 255, 217));  // .85
+        painter.setFont(f);
+        painter.drawText(tx, ty + fm.ascent(), countText);
+        tx += fm.horizontalAdvance(countText) + gap;
+
+        // 44 px progress bar (blue fill).
+        const QRectF barR(tx, chipY + chipH / 2.0 - barH / 2.0, barW, barH);
+        QPainterPath barPath;
+        barPath.addRoundedRect(barR, 2, 2);
+        painter.fillPath(barPath, QColor(255, 255, 255, 71));  // .28
+        const double frac =
+            static_cast<double>(currentIndex()) / static_cast<double>(n);
+        if (frac > 0.0) {
+            const double fw = barW * frac;
+            QPainterPath fillPath;
+            fillPath.addRoundedRect(
+                QRectF(barR.x(), barR.y(), qMax(fw, 4.0), barH), 2, 2);
+            painter.fillPath(fillPath, QColor("#3daee9"));
+        }
+    }
+
+    // 1 px frame-outline border (mockup .preview).
+    painter.setClipPath(QPainterPath());
+    painter.setPen(QPen(frameOutline, 1));
+    painter.drawRoundedRect(outer, radius, radius);
 }
 
 }  // namespace johona::gui

@@ -34,6 +34,9 @@ struct ApplyOutcome {
     bool success = false;
     bool skipped = false;  // skip-if-unchanged (wallpaper already correct)
     QString themeName;
+    /// Pretty name for UI (displayName with trailing year stripped;
+    /// themes::prettyThemeName).
+    QString themeDisplayName;
     QString imagePath;
     QString category;
     QString message;
@@ -105,7 +108,8 @@ public:
     config::Paths paths() const { return m_paths; }
 
 signals:
-    void applied(const QString& themeName, const QString& imagePath, const QString& category);
+    void applied(const QString& themeName, const QString& themeDisplayName,
+                 const QString& imagePath, const QString& category);
     void statusChanged(const QString& message);
     void errorOccurred(const QString& message);
     /// Scheduler start/stop changed (GUI: tray + scheduler tab).

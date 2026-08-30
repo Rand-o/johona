@@ -136,10 +136,13 @@ std::vector<double> allBoundaries(const Segments& seg, const ThemeImageLists& li
 ///
 /// `segmentsProvider` is used to walk forward day by day when `nowMs` is at
 /// or after this day's last boundary (delayed run / clock jump); the walk is
-/// bounded (8 days).  `currentIndex` is the position of the currently
-/// displayed image in its category list (or -1); when its display window
-/// still lies ahead of `nowMs`, that window's end is returned (keeps
-/// re-arming correct after a delayed run).
+/// bounded (8 days).  `currentImageValue` is the theme.json image value
+/// currently displayed (or -1 when unknown); the value is located in the
+/// category lists, and when its display window still lies ahead of `nowMs`,
+/// that window's end is returned (keeps re-arming correct after a delayed
+/// run).  Pass the *value* (ImageSelection::imageValue), not the list
+/// position: a position can collide with another image's value in a
+/// different list.
 std::optional<double> nextChangeTime(double nowMs, const Segments& seg,
                                      const ThemeImageLists& lists,
                                      const std::function<Segments(const QDate&)>& segmentsProvider,

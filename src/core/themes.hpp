@@ -82,4 +82,10 @@ ImportResult importTheme(const QString& zipPath, const QString& themesDir);
 /// Delete a theme by name or path.  Refuses paths outside `themesDir`.
 DeleteResult deleteTheme(const QString& nameOrPath, const QString& themesDir);
 
+/// Human-readable theme name for display (tray tooltip, etc.): the
+/// theme.json `displayName` with any trailing year (" 2023", " 2025-1")
+/// stripped; falls back to the directory name when displayName is empty.
+/// A mid-name year ("Chicago 2026 Mix") is part of the name and stays.
+QString prettyThemeName(const QString& displayName, const QString& dirName);
+
 }  // namespace johona::themes

@@ -1,8 +1,11 @@
 // previewwidget.hpp — kWallpaper ImageCrossFadeWidget parity: a full-theme
-// slideshow preview.
+// slideshow preview (redesign mockup).
 //
 //  - 2.7 s per image (1.5 s hold + 1.2 s cross-fade, InOutQuad)
-//  - KeepAspectRatio, centered; letterbox = widget background
+//  - KeepAspectRatio, centered; letterbox = dark #0a0d14 (mockup .preview)
+//  - Rounded 8 px clip + 1 px frame-outline border (mockup .preview)
+//  - Bottom-left glassy overlay chip: theme name (bold) · "n / N" counter
+//    · 44 px progress bar (blue fill) — painted, no blur dependency
 //  - Adaptive decode long-edge: max(960, min(2160, physical long edge))
 //  - LRU decoded-image cache with a 48 MB byte budget
 //  - Decodes on QThreadPool workers; a version token cancels in-flight
@@ -32,10 +35,16 @@ public:
     /// Replace the slideshow with these image paths (natural order) and
     /// show the first.  Empty list → "Select a theme to preview".
     void setImages(const QStringList& paths);
+    /// Overlay chip label (theme display name).
+    void setThemeName(const QString& name);
     void clear();
     void start();
     void stop();
     bool isRunning() const { return m_running; }
+
+    /// 1-based index of the image currently shown (for the overlay chip).
+    int currentIndex() const { return m_idx + 1; }
+    int count() const { return m_paths.size(); }
 
     QSize sizeHint() const override;
 
@@ -62,6 +71,7 @@ private:
     static qint64 imageBytes(const QImage& img);
 
     QStringList m_paths;
+    QString m_name;
     int m_idx = 0;
     double m_blend = 0.0;
     bool m_running = false;

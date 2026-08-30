@@ -15,6 +15,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonParseError>
+#include <QRegularExpression>
 #include <QTemporaryDir>
 
 namespace johona::themes {
@@ -82,6 +83,16 @@ std::optional<ThemeData> loadThemeData(const QString& themeDir) {
     data.sunsetImageList = readList("sunsetImageList");
     data.nightImageList = readList("nightImageList");
     return data;
+}
+
+QString prettyThemeName(const QString& displayName, const QString& dirName) {
+    QString name = displayName.trimmed();
+    if (name.isEmpty())
+        name = dirName;
+    // Strip a trailing year ("Tahoe 2026") or year-index ("Bangkok 2025-1");
+    // a mid-name year is part of the name and stays.
+    static const QRegularExpression re(QStringLiteral("\\s+\\d{4}(-\\d+)?$"));
+    return name.remove(re).trimmed();
 }
 
 void normalizeImageLists(ThemeData& data) {

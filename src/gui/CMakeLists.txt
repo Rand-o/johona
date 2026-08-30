@@ -7,6 +7,7 @@ add_executable(johona
     schedulertab.cpp
     previewwidget.cpp
     schedulepreview.cpp
+    widgets.cpp
 )
 target_include_directories(johona PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(johona

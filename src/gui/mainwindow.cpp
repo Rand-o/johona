@@ -1,48 +1,56 @@
-// mainwindow.cpp — see mainwindow.hpp (kWallpaper WallpaperWindow parity).
+// mainwindow.cpp — see mainwindow.hpp (redesign mockup shell).
 
 #include "mainwindow.hpp"
 
 #include <QApplication>
+#include <QButtonGroup>
 #include <QCloseEvent>
 #include <QDate>
-#include <QFileDialog>
-#include <QMenu>
-#include <QMenuBar>
+#include <QFrame>
+#include <QHBoxLayout>
+#include <QLabel>
 #include <QMessageBox>
 #include <QSettings>
 #include <QShowEvent>
 #include <QStatusBar>
+#include <QVBoxLayout>
 
 #include "appicons.hpp"
 #include "enginebridge.hpp"
-#include "previewwidget.hpp"
+#include "themes.hpp"
 #include "schedulepreview.hpp"
 #include "schedulertab.hpp"
 #include "settstab.hpp"
+#include "style.hpp"
 #include "themestab.hpp"
+#include "widgets.hpp"
 
 namespace johona::gui {
 
 namespace {
 
-// ── Breeze palettes (kWallpaper _breeze_light/_breeze_dark parity) ─────
+// ── Breeze palettes (mockup/redesign.html Breeze 6.7 tokens) ────────────
+// Aligned to the mockup's exact light/dark token values (the redesign's
+// single source of truth); "system" mode still uses the system palette
+// snapshot taken at startup.
 
 QPalette breezeLight() {
     QPalette p;
     p.setColor(QPalette::Window, QColor("#eff0f1"));
-    p.setColor(QPalette::WindowText, QColor("#31363b"));
-    p.setColor(QPalette::Base, QColor("#fcfcfc"));
-    p.setColor(QPalette::AlternateBase, QColor("#eff0f1"));
-    p.setColor(QPalette::Text, QColor("#31363b"));
-    p.setColor(QPalette::Button, QColor("#eff0f1"));
-    p.setColor(QPalette::ButtonText, QColor("#31363b"));
+    p.setColor(QPalette::WindowText, QColor("#232629"));
+    p.setColor(QPalette::Base, QColor("#ffffff"));
+    p.setColor(QPalette::AlternateBase, QColor("#f7f7f7"));
+    p.setColor(QPalette::Text, QColor("#232629"));
+    p.setColor(QPalette::Button, QColor("#fcfcfc"));
+    p.setColor(QPalette::ButtonText, QColor("#232629"));
     p.setColor(QPalette::Highlight, QColor("#3daee9"));
-    p.setColor(QPalette::HighlightedText, QColor("#fcfcfc"));
+    p.setColor(QPalette::HighlightedText, QColor("#ffffff"));
     p.setColor(QPalette::ToolTipBase, QColor("#eff0f1"));
-    p.setColor(QPalette::ToolTipText, QColor("#31363b"));
+    p.setColor(QPalette::ToolTipText, QColor("#232629"));
     p.setColor(QPalette::Link, QColor("#2980b9"));
-    p.setColor(QPalette::Mid, QColor("#c8cbce"));
-    p.setColor(QPalette::PlaceholderText, QColor("#8e9297"));
+    p.setColor(QPalette::Mid, QColor("#b8babd"));
+    p.setColor(QPalette::Midlight, QColor("#c8cbce"));
+    p.setColor(QPalette::PlaceholderText, QColor("#80848a"));
     const QPalette::ColorGroup d = QPalette::Disabled;
     p.setColor(d, QPalette::WindowText, QColor("#a0a1a3"));
     p.setColor(d, QPalette::Text, QColor("#a0a1a3"));
@@ -52,20 +60,21 @@ QPalette breezeLight() {
 
 QPalette breezeDark() {
     QPalette p;
-    p.setColor(QPalette::Window, QColor("#31363b"));
-    p.setColor(QPalette::WindowText, QColor("#eff0f1"));
-    p.setColor(QPalette::Base, QColor("#232629"));
-    p.setColor(QPalette::AlternateBase, QColor("#31363b"));
-    p.setColor(QPalette::Text, QColor("#eff0f1"));
-    p.setColor(QPalette::Button, QColor("#31363b"));
-    p.setColor(QPalette::ButtonText, QColor("#eff0f1"));
+    p.setColor(QPalette::Window, QColor("#202326"));
+    p.setColor(QPalette::WindowText, QColor("#fcfcfc"));
+    p.setColor(QPalette::Base, QColor("#141618"));
+    p.setColor(QPalette::AlternateBase, QColor("#1d1f22"));
+    p.setColor(QPalette::Text, QColor("#fcfcfc"));
+    p.setColor(QPalette::Button, QColor("#292c30"));
+    p.setColor(QPalette::ButtonText, QColor("#fcfcfc"));
     p.setColor(QPalette::Highlight, QColor("#3daee9"));
-    p.setColor(QPalette::HighlightedText, QColor("#eff0f1"));
-    p.setColor(QPalette::ToolTipBase, QColor("#31363b"));
-    p.setColor(QPalette::ToolTipText, QColor("#eff0f1"));
-    p.setColor(QPalette::Link, QColor("#2980b9"));
-    p.setColor(QPalette::Mid, QColor("#464b50"));
-    p.setColor(QPalette::PlaceholderText, QColor("#7f8487"));
+    p.setColor(QPalette::HighlightedText, QColor("#fcfcfc"));
+    p.setColor(QPalette::ToolTipBase, QColor("#202326"));
+    p.setColor(QPalette::ToolTipText, QColor("#fcfcfc"));
+    p.setColor(QPalette::Link, QColor("#1d99f3"));
+    p.setColor(QPalette::Mid, QColor("#4d5154"));
+    p.setColor(QPalette::Midlight, QColor("#54585c"));
+    p.setColor(QPalette::PlaceholderText, QColor("#8e9297"));
     const QPalette::ColorGroup d = QPalette::Disabled;
     p.setColor(d, QPalette::WindowText, QColor("#6e7174"));
     p.setColor(d, QPalette::Text, QColor("#6e7174"));
@@ -88,12 +97,9 @@ MainWindow::MainWindow(Engine* engine,
     resize(1200, 700);
     setMinimumSize(800, 500);
 
-    setupMenus();
-    setupTabs();
+    setupUi();
     setupTray();
     applyAppearance();
-
-    statusBar()->showMessage(QStringLiteral("Ready"));
 
     // Restore the window geometry (kWallpaper QSettings parity).
     QSettings settings;
@@ -112,8 +118,11 @@ MainWindow::MainWindow(Engine* engine,
     connect(m_engine, &Engine::logMessage, this, &MainWindow::onEngineLog);
     connect(m_engine, &Engine::runningChanged, this,
             &MainWindow::onRunningChanged);
+    connect(m_engine, &Engine::applied, this,
+            [this](const QString&, const QString& displayName, const QString&,
+                   const QString&) { updateTrayTooltip(displayName); });
 
-    // ── tabs → window ───────────────────────────────────────────────────
+    // ── pages → window ──────────────────────────────────────────────────
     connect(m_themesTab, &ThemesTab::statusMessage, this,
             &MainWindow::onTabStatus);
     connect(m_settingsTab, &SettingsTab::settingsSaved, this,
@@ -126,16 +135,29 @@ MainWindow::MainWindow(Engine* engine,
             &MainWindow::startScheduler);
     connect(m_schedulerTab, &SchedulerTab::stopRequested, this,
             &MainWindow::stopScheduler);
-    connect(m_tabs, &QTabWidget::currentChanged, this,
-            [this](int index) {
-                if (index >= 0)
-                    m_themesTab->setTabVisible(index == 0);
-            });
+    connect(m_schedulerTab, &SchedulerTab::nextRequested, this,
+            &MainWindow::onNextWallpaper);
+
+    // Initial scheduler UI state (sidebar card, tray, menu toggle).  If
+    // the engine hot-starts, runningChanged(true) updates it again.
+    updateSchedulerUi(false);
 
     // Initial scheduler state (the engine may have hot-started).
-    auto fut = bridge::call<bool>(m_engine,
-                                  [this] { return m_engine->isRunning(); });
-    fut.then(this, [this](bool running) { updateSchedulerUi(running); });
+    refreshStatusInfo();
+
+    // Initial tray tooltip: pretty name of the last-applied theme (the
+    // engine thread does the theme.json read; the applied signal keeps
+    // the tooltip current afterwards).
+    bridge::call<QString>(m_engine, [this]() {
+        const config::Config cfg = m_engine->config();
+        if (cfg.lastApplied.isEmpty())
+            return QString();
+        const QString dir =
+            m_engine->paths().themesDir + QStringLiteral("/") + cfg.lastApplied;
+        if (auto data = themes::loadThemeData(dir))
+            return themes::prettyThemeName(data->displayName, cfg.lastApplied);
+        return themes::prettyThemeName(QString(), cfg.lastApplied);
+    }).then(this, [this](QString name) { updateTrayTooltip(name); });
 
     // ── periodic hooks ──────────────────────────────────────────────────
     m_lastDate = QDate::currentDate();
@@ -147,66 +169,249 @@ MainWindow::MainWindow(Engine* engine,
     connect(&m_tzTimer, &QTimer::timeout, this, &MainWindow::onTzCheck);
     m_tzTimer.start();
 
+    m_statusTimer.setInterval(60000);
+    connect(&m_statusTimer, &QTimer::timeout, this,
+            &MainWindow::onRefreshStatus);
+    m_statusTimer.start();
+
     if (m_report.ran)
-        statusBar()->showMessage(
+        m_statusMsg->showMessage(
             QStringLiteral("Migrated kWallpaper data: %1")
                 .arg(m_report.summary()),
             8000);
 }
 
-void MainWindow::setupMenus() {
-    auto* fileMenu = menuBar()->addMenu(QStringLiteral("File"));
-    auto* importAct = fileMenu->addAction(
-        themeIcon(QStringLiteral("document-import"), kFallbackImportSvg),
+void MainWindow::setupUi() {
+    auto* central = new QWidget(this);
+    auto* root = new QVBoxLayout(central);
+    root->setContentsMargins(0, 0, 0, 0);
+    root->setSpacing(0);
+
+    // ── title bar (replaces the QMenuBar; the WM draws the frame) ──────
+    auto* titlebar = new QWidget(central);
+    titlebar->setProperty("cssClass", "titlebar");
+    titlebar->setFixedHeight(40);
+    auto* tl = new QHBoxLayout(titlebar);
+    tl->setContentsMargins(10, 0, 4, 0);
+    tl->setSpacing(0);
+    auto* appIcon = new QLabel(titlebar);
+    appIcon->setPixmap(svgIcon(kAppIconSvg, 64).pixmap(22, 22));
+    appIcon->setFixedSize(22, 22);
+    tl->addWidget(appIcon);
+    auto* tbTitle = new QLabel(QStringLiteral("Johona Wallpaper"), titlebar);
+    {
+        QFont f;
+        f.setPixelSize(13);
+        tbTitle->setFont(f);
+    }
+    tbTitle->setContentsMargins(8, 0, 10, 0);
+    tl->addWidget(tbTitle);
+    tl->addStretch(1);
+
+    // Hamburger menu (mockup #menu-pop contents).
+    m_menu = new QMenu(titlebar);
+    auto* importAct = m_menu->addAction(
+        colorIcon(kImportSvg, QColor("#80848a"), 24).pixmap(15, 15),
         QStringLiteral("Import Theme…"));
     importAct->setShortcut(QKeySequence(QStringLiteral("Ctrl+I")));
     connect(importAct, &QAction::triggered, this, &MainWindow::onImport);
-    fileMenu->addSeparator();
-    auto* quitAct = fileMenu->addAction(
-        themeIcon(QStringLiteral("application-exit"), kFallbackExitSvg),
+    m_menu->addSeparator();
+    m_menuToggle = m_menu->addAction(
+        colorIcon(kPlayFilledSvg, QColor("#80848a"), 24).pixmap(15, 15),
+        QStringLiteral("Start Scheduler"));
+    connect(m_menuToggle, &QAction::triggered, this,
+            &MainWindow::onToggleScheduler);
+    auto* nextAct = m_menu->addAction(
+        colorIcon(kRefreshSvg, QColor("#80848a"), 24).pixmap(15, 15),
+        QStringLiteral("Next wallpaper"));
+    connect(nextAct, &QAction::triggered, this, &MainWindow::onNextWallpaper);
+    m_menu->addSeparator();
+    auto* prefsAct = m_menu->addAction(
+        colorIcon(kNavSettingsSvg, QColor("#80848a"), 24).pixmap(15, 15),
+        QStringLiteral("Preferences"));
+    connect(prefsAct, &QAction::triggered, this, [this]() { showPage(2); });
+    auto* aboutAct = m_menu->addAction(
+        colorIcon(kAboutSvg, QColor("#80848a"), 24).pixmap(15, 15),
+        QStringLiteral("About Johona…"));
+    connect(aboutAct, &QAction::triggered, this, &MainWindow::onAbout);
+    m_menu->addSeparator();
+    auto* quitAct = m_menu->addAction(
+        colorIcon(kExitSvg, QColor("#80848a"), 24).pixmap(15, 15),
         QStringLiteral("Quit"));
     quitAct->setShortcut(QKeySequence(QStringLiteral("Ctrl+Q")));
     connect(quitAct, &QAction::triggered, qApp, &QApplication::quit);
 
-    auto* schedMenu = menuBar()->addMenu(QStringLiteral("Scheduler"));
-    m_menuStart = schedMenu->addAction(
-        themeIcon(QStringLiteral("media-playback-start"), kFallbackPlaySvg),
-        QStringLiteral("Start"));
-    connect(m_menuStart, &QAction::triggered, this,
-            &MainWindow::startScheduler);
-    m_menuStop = schedMenu->addAction(
-        themeIcon(QStringLiteral("media-playback-stop"), kFallbackStopSvg),
-        QStringLiteral("Stop"));
-    m_menuStop->setEnabled(false);
-    connect(m_menuStop, &QAction::triggered, this,
-            &MainWindow::stopScheduler);
+    m_menuBtn = new QToolButton(titlebar);
+    m_menuBtn->setFixedSize(32, 32);
+    m_menuBtn->setToolTip(QStringLiteral("Application menu"));
+    m_menuBtn->setPopupMode(QToolButton::InstantPopup);
+    m_menuBtn->setMenu(m_menu);
+    tl->addWidget(m_menuBtn);
+    root->addWidget(titlebar);
 
-    auto* helpMenu = menuBar()->addMenu(QStringLiteral("Help"));
-    auto* aboutAct = helpMenu->addAction(
-        themeIcon(QStringLiteral("help-about"), kFallbackAboutSvg),
-        QStringLiteral("About…"));
-    connect(aboutAct, &QAction::triggered, this, &MainWindow::onAbout);
-}
+    // ── body: sidebar + pages ───────────────────────────────────────────
+    auto* body = new QWidget(central);
+    auto* bl = new QHBoxLayout(body);
+    bl->setContentsMargins(0, 0, 0, 0);
+    bl->setSpacing(0);
 
-void MainWindow::setupTabs() {
-    m_tabs = new QTabWidget(this);
+    auto* sidebar = new QWidget(body);
+    sidebar->setProperty("cssClass", "sidebar");
+    sidebar->setFixedWidth(220);
+    auto* sl = new QVBoxLayout(sidebar);
+    sl->setContentsMargins(12, 14, 12, 12);
+    sl->setSpacing(0);
+
+    // Brand header (mockup .brand).
+    auto* brand = new QWidget(sidebar);
+    auto* brandL = new QHBoxLayout(brand);
+    brandL->setContentsMargins(8, 4, 8, 16);
+    brandL->setSpacing(10);
+    auto* brandIcon = new QFrame(brand);
+    brandIcon->setProperty("cssClass", "brand-icon");
+    brandIcon->setFixedSize(36, 36);
+    auto* bil = new QHBoxLayout(brandIcon);
+    bil->setContentsMargins(0, 0, 0, 0);
+    auto* biLbl = new QLabel(brandIcon);
+    biLbl->setPixmap(svgIcon(kAppIconSvg, 64).pixmap(22, 22));
+    bil->addWidget(biLbl, 0, Qt::AlignCenter);
+    brandL->addWidget(brandIcon);
+    auto* brandText = new QVBoxLayout();
+    brandText->setSpacing(1);
+    auto* bn = new QLabel(QStringLiteral("Johona"), brand);
+    {
+        QFont f;
+        f.setPixelSize(15);
+        f.setWeight(QFont::Bold);
+        bn->setFont(f);
+    }
+    auto* bs = new QLabel(QStringLiteral("Wallpaper Scheduler"), brand);
+    {
+        QFont f;
+        f.setPixelSize(11);
+        bs->setFont(f);
+        QPalette pal = bs->palette();
+        pal.setColor(QPalette::WindowText,
+                     pal.color(QPalette::PlaceholderText));
+        bs->setPalette(pal);
+    }
+    brandText->addWidget(bn);
+    brandText->addWidget(bs);
+    brandL->addLayout(brandText);
+    sl->addWidget(brand);
+
+    // Nav (mockup .nav).
+    auto* nav = new QButtonGroup(this);
+    nav->setExclusive(true);
+    m_navThemes = new NavItem(kNavThemesSvg, QStringLiteral("Themes"),
+                              sidebar);
+    m_navScheduler = new NavItem(kNavSchedulerSvg,
+                                 QStringLiteral("Scheduler"), sidebar);
+    m_navSettings = new NavItem(kNavSettingsSvg,
+                                QStringLiteral("Settings"), sidebar);
+    nav->addButton(m_navThemes, 0);
+    nav->addButton(m_navScheduler, 1);
+    nav->addButton(m_navSettings, 2);
+    m_navThemes->setChecked(true);
+    connect(nav, &QButtonGroup::idClicked, this, &MainWindow::showPage);
+    auto* navLay = new QVBoxLayout();
+    navLay->setSpacing(2);
+    navLay->addWidget(m_navThemes);
+    navLay->addWidget(m_navScheduler);
+    navLay->addWidget(m_navSettings);
+    sl->addLayout(navLay);
+
+    sl->addStretch(1);
+
+    // Scheduler status card (mockup .side-status).
+    auto* card = new QFrame(sidebar);
+    card->setProperty("cssClass", "card");
+    auto* cl = new QVBoxLayout(card);
+    cl->setContentsMargins(12, 10, 12, 10);
+    cl->setSpacing(0);
+    auto* row = new QHBoxLayout();
+    row->setSpacing(7);
+    m_sideDot = new StatusDot(8, card);
+    row->addWidget(m_sideDot);
+    m_sideTitle = new QLabel(QStringLiteral("Scheduler stopped"), card);
+    {
+        QFont f;
+        f.setPixelSize(13);  // 12.5 px mockup
+        f.setWeight(QFont::DemiBold);
+        m_sideTitle->setFont(f);
+    }
+    row->addWidget(m_sideTitle);
+    row->addStretch(1);
+    cl->addLayout(row);
+    m_sideSub =
+        new QLabel(QStringLiteral("Press Start to apply wallpapers"), card);
+    {
+        QFont f;
+        f.setPixelSize(11);
+        m_sideSub->setFont(f);
+        QPalette pal = m_sideSub->palette();
+        pal.setColor(QPalette::WindowText,
+                     pal.color(QPalette::PlaceholderText));
+        m_sideSub->setPalette(pal);
+    }
+    m_sideSub->setWordWrap(true);
+    m_sideSub->setContentsMargins(15, 4, 0, 9);
+    cl->addWidget(m_sideSub);
+    m_sideToggle = new QPushButton(card);
+    m_sideToggle->setProperty("cssClass", "small");
+    connect(m_sideToggle, &QPushButton::clicked, this,
+            &MainWindow::onToggleScheduler);
+    cl->addWidget(m_sideToggle);
+    sl->addWidget(card);
+
+    bl->addWidget(sidebar);
+
+    // Pages.
+    m_pages = new QStackedWidget(body);
     m_themesTab = new ThemesTab(m_engine, m_engine->paths());
-    m_settingsTab = new SettingsTab(m_engine, m_location);
     m_schedulerTab = new SchedulerTab(m_engine);
-    m_tabs->addTab(
-        m_themesTab,
-        themeIcon(QStringLiteral("preferences-desktop-wallpaper"),
-                  kFallbackImageSvg),
-        QStringLiteral("Themes"));
-    m_tabs->addTab(
-        m_settingsTab,
-        themeIcon(QStringLiteral("configure"), kFallbackConfigureSvg),
-        QStringLiteral("Settings"));
-    m_tabs->addTab(
-        m_schedulerTab,
-        themeIcon(QStringLiteral("chronometer"), kFallbackClockSvg),
-        QStringLiteral("Scheduler"));
-    setCentralWidget(m_tabs);
+    m_settingsTab = new SettingsTab(m_engine, m_location);
+    m_pages->addWidget(m_themesTab);    // 0
+    m_pages->addWidget(m_schedulerTab); // 1
+    m_pages->addWidget(m_settingsTab);  // 2
+    bl->addWidget(m_pages, 1);
+    root->addWidget(body, 1);
+
+    setCentralWidget(central);
+
+    // ── status bar (mockup #statusbar) ──────────────────────────────────
+    auto* sb = statusBar();
+    sb->setFixedHeight(27);
+    m_statusMsg = new StatusMessageLabel(sb);
+    sb->addWidget(m_statusMsg, 1);
+
+    auto* right = new QWidget(sb);
+    auto* rh = new QHBoxLayout(right);
+    rh->setContentsMargins(0, 0, 0, 0);
+    rh->setSpacing(12);
+    auto* nextItem = new QWidget(right);
+    auto* nh = new QHBoxLayout(nextItem);
+    nh->setContentsMargins(0, 0, 0, 0);
+    nh->setSpacing(5);
+    auto* clockIcon = new QLabel(nextItem);
+    clockIcon->setPixmap(
+        colorIcon(kNavSchedulerSvg, QColor("#80848a"), 24).pixmap(12, 12));
+    nh->addWidget(clockIcon);
+    m_sbNext = new QLabel(QStringLiteral("Next —"), nextItem);
+    nh->addWidget(m_sbNext);
+    rh->addWidget(nextItem);
+    auto addSep = [right]() {
+        auto* s = new QWidget(right);
+        s->setProperty("cssClass", "sb-sep");
+        s->setFixedSize(1, 13);
+        return s;
+    };
+    rh->addWidget(addSep());
+    m_sbBackend = new QLabel(QStringLiteral("no backend"), right);
+    rh->addWidget(m_sbBackend);
+    rh->addWidget(addSep());
+    rh->addWidget(new QLabel(QStringLiteral("v1.0.0"), right));
+    sb->addPermanentWidget(right);
 
     m_themesTab->refresh();
 }
@@ -236,8 +441,7 @@ void MainWindow::setupTray() {
     auto* showAct = menu->addAction(
         themeIcon(QStringLiteral("window-new"), kFallbackWindowSvg),
         QStringLiteral("Show"));
-    connect(showAct, &QAction::triggered, this,
-            &MainWindow::showAndActivate);
+    connect(showAct, &QAction::triggered, this, &MainWindow::showAndActivate);
     auto* quitAct = menu->addAction(
         themeIcon(QStringLiteral("application-exit"), kFallbackExitSvg),
         QStringLiteral("Quit"));
@@ -258,15 +462,38 @@ void MainWindow::updateTrayIcon() {
                                     : svgIcon(kTrayDarkSvg));
 }
 
+void MainWindow::updateTrayTooltip(const QString& themeDisplayName) {
+    if (!m_tray)
+        return;
+    m_tray->setToolTip(themeDisplayName.trimmed().isEmpty()
+                           ? QStringLiteral("Johona Wallpaper")
+                           : QStringLiteral("Johona — %1")
+                                 .arg(themeDisplayName.trimmed()));
+}
+
+void MainWindow::updateTitleBarIcon() {
+    const auto& tok = style::current();
+    m_menuBtn->setIcon(
+        colorIcon(kMenuHamburgerSvg, QColor(tok.windowText), 24).pixmap(19, 19));
+}
+
 void MainWindow::applyAppearance() {
     const QString mode = m_engine->config().themeMode;
-    if (mode == "dark")
+    if (mode == "dark") {
         QApplication::setPalette(breezeDark());
-    else if (mode == "light")
+        style::setTokens(style::dark());
+    } else if (mode == "light") {
         QApplication::setPalette(breezeLight());
-    else
+        style::setTokens(style::light());
+    } else {
         QApplication::setPalette(m_systemPalette);
+        style::setTokens(
+            style::tokensFor(m_systemPalette.color(QPalette::Window)));
+    }
+    qApp->setStyleSheet(style::buildStyleSheet(style::current()));
     updateTrayIcon();
+    updateTitleBarIcon();
+    m_schedulerTab->refreshThemeColors();
 }
 
 void MainWindow::showAndActivate() {
@@ -290,18 +517,18 @@ void MainWindow::closeEvent(QCloseEvent* event) {
 
 void MainWindow::showEvent(QShowEvent* event) {
     QMainWindow::showEvent(event);
-    if (m_tabs->currentIndex() == 0)
+    if (m_pages->currentIndex() == 0)
         m_themesTab->setTabVisible(true);
 }
 
 // ── engine → GUI ─────────────────────────────────────────────────────────
 
 void MainWindow::onEngineStatus(const QString& message) {
-    statusBar()->showMessage(message, 5000);
+    m_statusMsg->showMessage(message, 5000);
 }
 
 void MainWindow::onEngineError(const QString& message) {
-    statusBar()->showMessage(message, 8000);
+    m_statusMsg->showMessage(message, 8000);
 }
 
 void MainWindow::onEngineLog(const QString& message) {
@@ -310,18 +537,51 @@ void MainWindow::onEngineLog(const QString& message) {
 
 void MainWindow::onRunningChanged(bool running) {
     updateSchedulerUi(running);
+    refreshStatusInfo();  // next-change info changed with the state
 }
 
 void MainWindow::updateSchedulerUi(bool running) {
-    m_menuStart->setEnabled(!running);
-    m_menuStop->setEnabled(running);
+    m_statusInfo.running = running;
+
+    // Sidebar status card.
+    m_sideDot->setOn(running);
+    m_sideTitle->setText(running ? QStringLiteral("Scheduler running")
+                                 : QStringLiteral("Scheduler stopped"));
+    const auto& tok = style::current();
+    if (running) {
+        m_sideToggle->setProperty("cssClass", "small");
+        m_sideToggle->setIcon(
+            colorIcon(kStopFilledSvg, QColor(tok.windowText), 24).pixmap(15, 15));
+        m_sideToggle->setText(QStringLiteral("Stop"));
+    } else {
+        m_sideToggle->setProperty("cssClass", "small primary");
+        m_sideToggle->setIcon(
+            colorIcon(kPlayFilledSvg, Qt::white, 24).pixmap(15, 15));
+        m_sideToggle->setText(QStringLiteral("Start"));
+    }
+    m_sideToggle->style()->unpolish(m_sideToggle);
+    m_sideToggle->style()->polish(m_sideToggle);
+
+    // Tray + hamburger menu.
     if (m_tray) {
         m_trayStatus->setText(running ? QStringLiteral("Scheduler: Running")
                                       : QStringLiteral("Scheduler: "
                                                         "Stopped"));
         m_trayToggle->setText(running ? QStringLiteral("Stop Scheduler")
                                       : QStringLiteral("Start Scheduler"));
+        m_trayToggle->setIcon(
+            running ? themeIcon(QStringLiteral("media-playback-stop"),
+                                kFallbackStopSvg)
+                    : themeIcon(QStringLiteral("media-playback-start"),
+                                kFallbackPlaySvg));
     }
+    m_menuToggle->setText(running ? QStringLiteral("Stop Scheduler")
+                                  : QStringLiteral("Start Scheduler"));
+    m_menuToggle->setIcon(
+        running ? colorIcon(kStopFilledSvg, QColor("#80848a"), 24).pixmap(15, 15)
+                : colorIcon(kPlayFilledSvg, QColor("#80848a"), 24).pixmap(15, 15));
+
+    // Pages.
     m_themesTab->setSchedulerRunning(running);
     m_schedulerTab->setRunning(running);
 }
@@ -335,14 +595,10 @@ void MainWindow::stopScheduler() {
 }
 
 void MainWindow::onToggleScheduler() {
-    auto fut = bridge::call<bool>(
-        m_engine, [this] { return m_engine->isRunning(); });
-    fut.then(this, [this](bool running) {
-        if (running)
-            stopScheduler();
-        else
-            startScheduler();
-    });
+    if (m_statusInfo.running)
+        stopScheduler();
+    else
+        startScheduler();
 }
 
 void MainWindow::onNextWallpaper() {
@@ -350,17 +606,17 @@ void MainWindow::onNextWallpaper() {
         m_engine, [this] { return m_engine->advanceShuffle(); });
     future.then(this, [this](ApplyOutcome out) {
         if (out.success)
-            statusBar()->showMessage(
+            m_statusMsg->showMessage(
                 QStringLiteral("Applied: %1").arg(out.themeName), 5000);
         else
-            statusBar()->showMessage(out.message, 8000);
+            m_statusMsg->showMessage(out.message, 8000);
     });
 }
 
-// ── tabs → window ────────────────────────────────────────────────────────
+// ── pages → window ───────────────────────────────────────────────────────
 
 void MainWindow::onTabStatus(const QString& message) {
-    statusBar()->showMessage(message, 5000);
+    m_statusMsg->showMessage(message, 5000);
 }
 
 void MainWindow::onSettingsSaved() {
@@ -393,6 +649,60 @@ void MainWindow::onAbout() {
             "(mourner/suncalc, BSD-2-Clause).</p>"));
 }
 
+// ── status info (sidebar + status bar) ───────────────────────────────────
+
+void MainWindow::refreshStatusInfo() {
+    auto fut = bridge::call<StatusInfo>(m_engine, [this]() {
+        StatusInfo info;
+        info.running = m_engine->isRunning();
+        const auto [when, label] = m_engine->nextChange();
+        if (when.isValid()) {
+            info.nextTime = when.time().toString("HH:mm");
+            info.nextLabel = label;
+        } else {
+            info.nextTime = QStringLiteral("—");
+        }
+        info.backend = m_engine->activeBackendName();
+        return info;
+    });
+    fut.then(this, [this](StatusInfo info) {
+        m_statusInfo = info;
+        applyStatusInfo(info);
+    });
+}
+
+void MainWindow::applyStatusInfo(const StatusInfo& info) {
+    if (info.running) {
+        if (info.nextLabel.isEmpty() ||
+            info.nextLabel == QStringLiteral("next change"))
+            m_sideSub->setText(
+                QStringLiteral("Next change %1").arg(info.nextTime));
+        else
+            m_sideSub->setText(QStringLiteral("Next change %1 · %2")
+                                   .arg(info.nextTime, info.nextLabel));
+        m_sbNext->setText(QStringLiteral("Next %1").arg(info.nextTime));
+    } else {
+        m_sideSub->setText(
+            QStringLiteral("Press Start to apply wallpapers"));
+        m_sbNext->setText(QStringLiteral("Next —"));
+    }
+    m_sbBackend->setText(
+        info.backend.isEmpty() || info.backend == "none"
+            ? QStringLiteral("no backend")
+            : QStringLiteral("%1 backend").arg(info.backend));
+}
+
+void MainWindow::onRefreshStatus() {
+    refreshStatusInfo();
+}
+
+// ── navigation ───────────────────────────────────────────────────────────
+
+void MainWindow::showPage(int index) {
+    m_pages->setCurrentIndex(index);
+    m_themesTab->setTabVisible(index == 0);
+}
+
 // ── periodic hooks ───────────────────────────────────────────────────────
 
 void MainWindow::onDateCheck() {
@@ -421,7 +731,7 @@ void MainWindow::onTzCheck() {
             return;
         m_settingsTab->reload();
         m_themesTab->rebuildPreview();
-        statusBar()->showMessage(
+        m_statusMsg->showMessage(
             QStringLiteral("System timezone changed — location updated"),
             8000);
     });
