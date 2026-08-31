@@ -72,6 +72,13 @@ public:
     };
 
 private:
+    /// Number of screens to (de)set: KWin scripting first (the documented
+    /// Plasma API), then the session's Qt screen list, then 1.
+    int screenCount(const QDBusConnection& conn) const;
+    /// The Image URL of one screen ("" when unavailable).
+    QString wallpaperImage(const QDBusConnection& conn, const Target& target,
+                           uint screenId) const;
+
     BusProvider m_bus;
     mutable Target m_target;
     mutable qint64 m_probeCacheAt = 0;

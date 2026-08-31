@@ -8,6 +8,7 @@
 #include <QDBusMessage>
 #include <QSignalSpy>
 #include <QTimeZone>
+#include <QUrl>
 
 #include "engine.hpp"
 #include "solar.hpp"
@@ -27,17 +28,26 @@ const char* kThemeJson = R"({
 })";
 
 /// Mock process runner: `gsettings list-recursively` succeeds (GNOME
-/// available), `gsettings set` fails `setFailuresRemaining` times,
+/// available), `gsettings get picture-uri` reports currentPictureUri when
+/// set (else fails), `gsettings set` fails `setFailuresRemaining` times,
 /// everything else (xdg-settings) fails.
 struct MockRun {
     std::vector<QString> calls;
     int setFailuresRemaining = 0;
+    QString currentPictureUri;  // `gsettings get ... picture-uri` result
 
     int operator()(const QString& prog, const QStringList& args, QString* out,
                    QString* err, int) {
         calls.push_back(prog + QLatin1Char(' ') + args.join(QLatin1Char(' ')));
         if (prog == "gsettings" && args.first() == "list-recursively")
             return 0;
+        if (prog == "gsettings" && args.first() == "get") {
+            if (currentPictureUri.isEmpty())
+                return 1;
+            if (out)
+                *out = QLatin1Char('\'') + currentPictureUri + QLatin1Char('\'');
+            return 0;
+        }
         if (prog == "gsettings" && args.first() == "set") {
             if (setFailuresRemaining > 0) {
                 setFailuresRemaining--;
@@ -78,12 +88,14 @@ private slots:
     void initTestCase();
     void applyNow_appliesAndPersists();
     void applyNow_skipUnchanged();
+    void applyNow_reappliesWhenDesktopChanged();
     void applyTheme_forcedRebuildsShuffle();
     void advanceShuffle_stepsList();
     void noThemes_fails();
     void backendFailure_retriesOnce();
     void backendFailure_defersToSafetyTick();
     void safetyTick_noop();
+    void safetyTick_reappliesWhenDesktopChanged();
     void cycleDisabled_skipsSafetyTick();
     void gnomeProbe_rejectedWithoutShell();
     void nextChange_valid();
@@ -208,6 +220,35 @@ void TestEngine::applyNow_skipUnchanged() {
     QCOMPARE(mock.setCalls(), setsAfterFirst);  // no re-set
 }
 
+void TestEngine::applyNow_reappliesWhenDesktopChanged() {
+    resetState();
+    makeTheme("solar");
+    const QDateTime fixedNow(QDate(2013, 3, 5), QTime(12, 0), QTimeZone("America/Phoenix"));
+    MockRun mock;
+    auto engine = makeEngine(&mock, fixedNow);
+
+    const ApplyOutcome first = engine->applyNow();
+    QVERIFY2(first.success, qPrintable(first.message));
+    QVERIFY(!first.skipped);
+    const int setsAfterFirst = mock.setCalls();
+
+    // The desktop now shows a different image (changed underneath us, e.g.
+    // by another app or manually): the config-based skip must not apply.
+    mock.currentPictureUri =
+        QUrl::fromLocalFile(m_themesDir + "/solar/img_5.jpg").toString();
+    const ApplyOutcome second = engine->applyNow();
+    QVERIFY2(second.success, qPrintable(second.message));
+    QVERIFY(!second.skipped);
+    QCOMPARE(mock.setCalls(), setsAfterFirst + 2);  // re-set (uri + uri-dark)
+
+    // Once the desktop matches the config again, the skip returns.
+    mock.currentPictureUri = QUrl::fromLocalFile(second.imagePath).toString();
+    const ApplyOutcome third = engine->applyNow();
+    QVERIFY2(third.success, qPrintable(third.message));
+    QVERIFY(third.skipped);
+    QCOMPARE(mock.setCalls(), setsAfterFirst + 2);
+}
+
 void TestEngine::applyTheme_forcedRebuildsShuffle() {
     resetState();
     makeTheme("solar");
@@ -316,6 +357,30 @@ void TestEngine::safetyTick_noop() {
     // (spec §6: "otherwise no-op. No re-apply").
     engine->runSafetyTick();
     QCOMPARE(mock.setCalls(), sets);
+}
+
+void TestEngine::safetyTick_reappliesWhenDesktopChanged() {
+    resetState();
+    makeTheme("solar");
+    const QDateTime fixedNow(QDate(2013, 3, 5), QTime(12, 0), QTimeZone("America/Phoenix"));
+    MockRun mock;
+    auto engine = makeEngine(&mock, fixedNow);
+
+    const ApplyOutcome first = engine->applyNow();
+    QVERIFY2(first.success, qPrintable(first.message));
+    const int setsAfterFirst = mock.setCalls();
+
+    // Desktop now shows a different image (drift): the safety tick must
+    // notice and re-apply.
+    mock.currentPictureUri =
+        QUrl::fromLocalFile(m_themesDir + "/solar/img_5.jpg").toString();
+    engine->runSafetyTick();
+    QCOMPARE(mock.setCalls(), setsAfterFirst + 2);  // re-set (uri + uri-dark)
+
+    // Desktop matches again → the tick goes back to no-op.
+    mock.currentPictureUri = QUrl::fromLocalFile(first.imagePath).toString();
+    engine->runSafetyTick();
+    QCOMPARE(mock.setCalls(), setsAfterFirst + 2);
 }
 
 void TestEngine::cycleDisabled_skipsSafetyTick() {

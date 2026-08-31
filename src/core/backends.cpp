@@ -10,7 +10,9 @@
 #include <QDBusInterface>
 #include <QDBusMessage>
 #include <QDateTime>
+#include <QGuiApplication>
 #include <QProcess>
+#include <QScreen>
 #include <QUrl>
 
 namespace johona::backends {
@@ -105,6 +107,54 @@ bool PlasmaBackend::isAvailable() {
     return m_probeCache;
 }
 
+int PlasmaBackend::screenCount(const QDBusConnection& conn) const {
+    // KWin scripting first: the documented Plasma API.  KWin 5/6 exposes
+    // the physical screens as the read-only `workspace.screens` list
+    // (NOT `desktops` — that is the list of virtual desktops).
+    QDBusInterface kwin(QStringLiteral("org.kde.KWin"), QStringLiteral("/KWin"),
+                        QStringLiteral("org.kde.KWin"), conn);
+    for (const char* script : {"workspace.screens.length", "screens.length"}) {
+        const QDBusMessage reply =
+            kwin.call(QStringLiteral("evaluateScript"), QString::fromLatin1(script));
+        if (reply.type() == QDBusMessage::ReplyMessage && !reply.arguments().isEmpty()) {
+            const int n = reply.arguments().first().toInt();
+            if (n > 0)
+                return n;
+        }
+    }
+    // Fallback: the session's screen list.  The app always runs inside the
+    // user's desktop session, so Qt knows the physical screens even when
+    // KWin scripting is unavailable (e.g. RDP/headless KWin builds).
+    if (QGuiApplication::instance()) {
+        const int n = QGuiApplication::screens().size();
+        if (n > 0)
+            return n;
+    }
+    return 1;
+}
+
+QString PlasmaBackend::wallpaperImage(const QDBusConnection& conn,
+                                      const Target& target, uint screenId) const {
+    QDBusInterface shell(QStringLiteral("org.kde.plasmashell"), target.objectPath,
+                         target.interfaceName, conn);
+    const QDBusMessage reply = shell.call(QStringLiteral("wallpaper"), screenId);
+    if (reply.type() != QDBusMessage::ReplyMessage || reply.arguments().isEmpty())
+        return {};
+    // The a{sv} reply can arrive as a raw QDBusArgument (the QVariantMap
+    // type annotation is not always applied — observed on Qt 6.9.3 behind
+    // the Flatpak session-bus proxy), where .toMap() yields an empty map.
+    // Handle both shapes.
+    const QVariant v = reply.arguments().first();
+    QVariantMap props;
+    if (v.canConvert<QVariantMap>()) {
+        props = v.toMap();
+    } else {
+        QDBusArgument arg = v.value<QDBusArgument>();
+        arg >> props;
+    }
+    return props.value(QStringLiteral("Image")).toString();
+}
+
 SetResult PlasmaBackend::setWallpaper(const QString& imagePath) {
     SetResult result;
     const QDBusConnection conn = m_bus(QDBusConnection::SessionBus);
@@ -125,23 +175,8 @@ SetResult PlasmaBackend::setWallpaper(const QString& imagePath) {
     // Qt 6's QDBusInterface::call returns a QDBusMessage (QDBusReply is
     // gone), so replies are inspected by message type.
     //
-    // Screen count comes from KWin's scripting interface (evaluateScript
-    // is an org.kde.KWin method, not a PlasmaWorkspace one).  Without
-    // KWin, fall back to a single screen.
-    int screens = 0;
-    {
-        QDBusInterface kwin(QStringLiteral("org.kde.KWin"), QStringLiteral("/KWin"),
-                            QStringLiteral("org.kde.KWin"), conn);
-        const QList<QVariant> scriptArgs{
-            QVariant(QStringLiteral("desktops().length"))};
-        const QDBusMessage countReply = kwin.callWithArgumentList(
-            QDBus::Block, QStringLiteral("evaluateScript"), scriptArgs);
-        if (countReply.type() == QDBusMessage::ReplyMessage)
-            screens = countReply.arguments().first().toInt();
-    }
-    if (screens <= 0)
-        screens = 1;
-
+    // Every screen gets the image (multi-monitor setups).
+    const int screens = screenCount(conn);
     const QString url = QUrl::fromLocalFile(imagePath).toString();
     int affected = 0;
     QString firstError;
@@ -178,13 +213,23 @@ QString PlasmaBackend::currentWallpaper() const {
     Target target = m_target.valid() ? m_target : findPlasmaTarget(conn);
     if (!target.valid())
         return {};
-    QDBusInterface shell(QStringLiteral("org.kde.plasmashell"), target.objectPath,
-                         target.interfaceName, conn);
-    const QDBusMessage reply = shell.call(QStringLiteral("wallpaper"), 0u);
-    if (reply.type() != QDBusMessage::ReplyMessage)
-        return {};
-    const QVariantMap props = reply.arguments().first().toMap();
-    return props.value(QStringLiteral("Image")).toString();
+    // Check every screen: the app sets the same image on all of them, so
+    // any screen that differs means drift.  Return the first differing
+    // image (which will not match the desired one), or the common image
+    // when all screens agree.
+    const int screens = screenCount(conn);
+    QString common;
+    for (int i = 0; i < screens; i++) {
+        const QString img = wallpaperImage(conn, target, static_cast<uint>(i));
+        if (img.isEmpty())
+            continue;  // screen without a configured image
+        if (common.isEmpty()) {
+            common = img;
+        } else if (img != common) {
+            return img;
+        }
+    }
+    return common;
 }
 
 // ---------------------------------------------------------------------------

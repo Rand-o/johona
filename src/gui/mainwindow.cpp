@@ -89,7 +89,7 @@ MainWindow::MainWindow(Engine* engine,
                        const migration::Report& report)
     : m_engine(engine), m_location(locationManager), m_report(report) {
     setWindowTitle(QStringLiteral("Johona Wallpaper"));
-    setWindowIcon(svgIcon(kAppIconSvg));
+    setWindowIcon(appIcon());
 
     // Snapshot the system palette BEFORE applying any scheme.
     m_systemPalette = QApplication::palette();
@@ -194,10 +194,10 @@ void MainWindow::setupUi() {
     auto* tl = new QHBoxLayout(titlebar);
     tl->setContentsMargins(10, 0, 4, 0);
     tl->setSpacing(0);
-    auto* appIcon = new QLabel(titlebar);
-    appIcon->setPixmap(svgIcon(kAppIconSvg, 64).pixmap(22, 22));
-    appIcon->setFixedSize(22, 22);
-    tl->addWidget(appIcon);
+    auto* titleIcon = new QLabel(titlebar);
+    titleIcon->setPixmap(appIcon().pixmap(22, 22));
+    titleIcon->setFixedSize(22, 22);
+    tl->addWidget(titleIcon);
     auto* tbTitle = new QLabel(QStringLiteral("Johona Wallpaper"), titlebar);
     {
         QFont f;
@@ -273,7 +273,7 @@ void MainWindow::setupUi() {
     auto* bil = new QHBoxLayout(brandIcon);
     bil->setContentsMargins(0, 0, 0, 0);
     auto* biLbl = new QLabel(brandIcon);
-    biLbl->setPixmap(svgIcon(kAppIconSvg, 64).pixmap(22, 22));
+    biLbl->setPixmap(appIcon().pixmap(22, 22));
     bil->addWidget(biLbl, 0, Qt::AlignCenter);
     brandL->addWidget(brandIcon);
     auto* brandText = new QVBoxLayout();
@@ -458,8 +458,7 @@ void MainWindow::updateTrayIcon() {
         return;
     // Light UI → dark glyph; dark UI → light glyph.
     const QString mode = m_engine->config().themeMode;
-    m_tray->setIcon(mode == "light" ? svgIcon(kTrayLightSvg)
-                                    : svgIcon(kTrayDarkSvg));
+    m_tray->setIcon(mode == "light" ? trayIconLight() : trayIconDark());
 }
 
 void MainWindow::updateTrayTooltip(const QString& themeDisplayName) {

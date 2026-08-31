@@ -7,6 +7,7 @@
 #include <QFileInfo>
 #include <QMetaObject>
 #include <QTimeZone>
+#include <QUrl>
 
 #include "solar.hpp"
 #include "themes.hpp"
@@ -18,6 +19,19 @@ namespace {
 bool sameShuffleState(const shuffle::ShuffleState& a, const shuffle::ShuffleState& b) {
     return a.shuffleList == b.shuffleList && a.currentIndex == b.currentIndex &&
            a.lastUsedDate == b.lastUsedDate;
+}
+
+/// True when `current` (as reported by IWallpaperBackend::currentWallpaper)
+/// points at the same file as `desiredPath`.  Backends report file:// URLs
+/// (Plasma, gsettings, xdg-settings); bare paths are handled too.
+bool sameWallpaperFile(const QString& current, const QString& desiredPath) {
+    const QString cur = current.trimmed();
+    if (cur.isEmpty())
+        return false;
+    const QUrl u(cur);
+    const QString curPath = u.isLocalFile() ? u.toLocalFile() : cur;
+    return QFileInfo(curPath).absoluteFilePath() ==
+           QFileInfo(desiredPath).absoluteFilePath();
 }
 
 }  // namespace
@@ -218,9 +232,21 @@ ApplyOutcome Engine::applyCurrent(bool dailyAdvance, const QString& forcedTheme)
     // 3. Set the wallpaper (skip-if-unchanged), with one 5 s retry
     //    (spec §6: a failed set is retried exactly once after 5 s; if it
     //    fails again it defers to the next safety tick).
-    const bool unchanged = !m_config.lastAppliedImage.isEmpty() &&
-                           QFileInfo(m_config.lastAppliedImage).absoluteFilePath() ==
-                               QFileInfo(out.imagePath).absoluteFilePath();
+    bool unchanged = !m_config.lastAppliedImage.isEmpty() &&
+                     QFileInfo(m_config.lastAppliedImage).absoluteFilePath() ==
+                         QFileInfo(out.imagePath).absoluteFilePath();
+    if (unchanged) {
+        // The config says this image is current, but the desktop can change
+        // underneath us (another app, a manual change, a set that was lost).
+        // Verify against the live wallpaper when the backend can report it;
+        // an empty result means "unknown" (e.g. the portal backend) and
+        // keeps the config-based skip.
+        if (auto* backend = m_backends->backend()) {
+            const QString cur = backend->currentWallpaper();
+            if (!cur.isEmpty() && !sameWallpaperFile(cur, out.imagePath))
+                unchanged = false;
+        }
+    }
     if (unchanged) {
         out.skipped = true;
     } else {
@@ -469,6 +495,26 @@ void Engine::onSafetyTick() {
         if (out.success)
             reschedule();
         return;
+    }
+
+    // Live wallpaper verification (drift detection): the desktop can change
+    // underneath us — a manual change, another app, a set that was lost.
+    // When the backend can report the wallpaper actually showing and it
+    // differs from the image we last applied, re-apply.  An empty report
+    // means "unknown" (e.g. the portal backend) → no-op, as before.
+    if (!m_config.lastAppliedImage.isEmpty()) {
+        if (auto* backend = m_backends->backend()) {
+            const QString cur = backend->currentWallpaper();
+            if (!cur.isEmpty() && !sameWallpaperFile(cur, m_config.lastAppliedImage)) {
+                emit logMessage(QStringLiteral(
+                    "Safety tick: wallpaper out of sync, re-applying %1")
+                                    .arg(QFileInfo(m_config.lastAppliedImage).fileName()));
+                const auto out = applyCurrent(false);
+                if (out.success)
+                    reschedule();
+                return;
+            }
+        }
     }
 
     // Otherwise: no-op.  No re-apply (unlike the old per-minute cycle).
