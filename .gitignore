@@ -1,6 +1,8 @@
-# build trees (dev builds run inside the KDE Flatpak SDK)
+# Build trees
 build/
 build-*/
+flatpak/build/
+flatpak/.flatpak-builder/
 
 # Qt Creator / editor cruft
 *.user
@@ -9,8 +11,14 @@ build-*/
 .idea/
 .vscode/
 
-# core dumps / logs (the bare `core` pattern would also match the
-# src/core/ package, so it is explicitly re-included below)
+# Core dumps / logs
 core
 !src/core/
 *.log
+
+# Flatpak bundles
+*.flatpak
+
+# OS cruft
+.DS_Store
+Thumbs.db

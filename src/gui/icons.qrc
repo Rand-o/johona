@@ -1,7 +1,7 @@
 <RCC>
     <qresource prefix="/icons">
-        <file>icons/johona.png</file>
-        <file>icons/johona-light.png</file>
-        <file>icons/johona-dark.png</file>
+        <file alias="johona.png">icons/johona.png</file>
+        <file alias="johona-light.png">icons/johona-light.png</file>
+        <file alias="johona-dark.png">icons/johona-dark.png</file>
     </qresource>
 </RCC>
