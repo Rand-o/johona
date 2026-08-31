@@ -52,13 +52,23 @@ main() {
         "$BUILD_DIR/app" "$MANIFEST"
 
     # flatpak-builder's --user install step can silently no-op in
-    # non-interactive contexts; verify and install explicitly if needed.
+    # non-interactive contexts; verify the --user installation matches
+    # the freshly built commit and install/update explicitly if not.
+    local remote="johona-local"
+    flatpak remote-add --user --if-not-exists --no-gpg-verify \
+        "$remote" "file://$PWD/$BUILD_DIR/repo"
+    local built_commit
+    built_commit="$(cat "$BUILD_DIR/repo/refs/heads/app/$APP_ID/$(uname -m)/master")"
     if ! flatpak info --user "$APP_ID" >/dev/null 2>&1; then
         echo "==> installing to --user installation"
-        local remote="johona-local"
-        flatpak remote-add --user --if-not-exists --no-gpg-verify \
-            "$remote" "file://$PWD/$BUILD_DIR/repo"
         flatpak install --user --noninteractive "$remote" "$APP_ID"
+    else
+        local installed_commit
+        installed_commit="$(flatpak info --user --show-commit "$APP_ID")"
+        if [[ "$installed_commit" != "$built_commit" ]]; then
+            echo "==> updating --user installation"
+            flatpak update --user --noninteractive "$APP_ID"
+        fi
     fi
 
     echo
