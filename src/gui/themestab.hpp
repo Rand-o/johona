@@ -63,7 +63,7 @@ private:
     void applyFilter();
     void updateEmptyState();
     void requestThumbs();
-    void onThumbsReady(int token, QHash<QString, QPixmap> thumbs);
+    void onThumbsReady(int token, const QString& path, QPixmap thumb);
     bool eventFilter(QObject* obj, QEvent* event) override;
 
     Engine* m_engine;

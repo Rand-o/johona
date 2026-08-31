@@ -53,7 +53,6 @@ private:
 
     // Scheduler
     QSpinBox* m_interval;
-    class ToggleSwitch* m_runCycle;
     class ToggleSwitch* m_dailyShuffle;
     class ToggleSwitch* m_startOnLaunch;
     class ToggleSwitch* m_autostart;

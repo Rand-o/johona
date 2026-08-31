@@ -212,14 +212,11 @@ Card makeCard(QWidget* parent, const char* iconSvg, const QString& title,
     v->addLayout(head);
 
     auto* d = new QLabel(desc, card);
+    d->setProperty("cssClass", "muted");
     {
         QFont f;
         f.setPixelSize(12);  // 11.5 px mockup
         d->setFont(f);
-        QPalette pal = d->palette();
-        pal.setColor(QPalette::WindowText,
-                     pal.color(QPalette::PlaceholderText));
-        d->setPalette(pal);
     }
     d->setWordWrap(true);
     d->setContentsMargins(23, 3, 0, 12);
@@ -253,14 +250,11 @@ void addRow(Card& card, bool first, const QString& title,
     lv->addWidget(t);
     if (!desc.isEmpty()) {
         auto* d = new QLabel(desc, lbl);
+        d->setProperty("cssClass", "muted");
         {
             QFont f;
             f.setPixelSize(11);
             d->setFont(f);
-            QPalette pal = d->palette();
-            pal.setColor(QPalette::WindowText,
-                         pal.color(QPalette::PlaceholderText));
-            d->setPalette(pal);
         }
         d->setWordWrap(true);
         lv->addWidget(d);
@@ -273,12 +267,10 @@ void addRow(Card& card, bool first, const QString& title,
 
 QLabel* mutedLabel(QWidget* parent, const QString& text, int px = 11) {
     auto* l = new QLabel(text, parent);
+    l->setProperty("cssClass", "muted");
     QFont f;
     f.setPixelSize(px);
     l->setFont(f);
-    QPalette pal = l->palette();
-    pal.setColor(QPalette::WindowText, pal.color(QPalette::PlaceholderText));
-    l->setPalette(pal);
     return l;
 }
 
@@ -309,14 +301,11 @@ SettingsTab::SettingsTab(Engine* engine,
     auto* subtitle = new QLabel(
         QStringLiteral("Changes apply to the running engine immediately"),
         head);
+    subtitle->setProperty("cssClass", "muted");
     {
         QFont f;
         f.setPixelSize(12);
         subtitle->setFont(f);
-        QPalette pal = subtitle->palette();
-        pal.setColor(QPalette::WindowText,
-                     pal.color(QPalette::PlaceholderText));
-        subtitle->setPalette(pal);
     }
     titleBox->addWidget(title);
     titleBox->addWidget(subtitle);
@@ -371,10 +360,6 @@ SettingsTab::SettingsTab(Engine* engine,
                               "resume"),
                m_interval);
 
-        m_runCycle = new ToggleSwitch(c.frame);
-        addRow(c, false, QStringLiteral("Cycle task"),
-               QStringLiteral("Re-apply the current image every interval"),
-               m_runCycle);
         m_dailyShuffle = new ToggleSwitch(c.frame);
         addRow(c, false, QStringLiteral("Daily theme shuffle"),
                QStringLiteral("Rotate through installed themes at "
@@ -507,7 +492,6 @@ SettingsTab::SettingsTab(Engine* engine,
 void SettingsTab::reload() {
     const config::Config c = m_engine->config();
     m_interval->setValue(c.safetyInterval);
-    m_runCycle->setChecked(c.cycleEnabled);
     m_dailyShuffle->setChecked(c.dailyShuffleEnabled);
     m_startOnLaunch->setChecked(c.startSchedulerOnLaunch);
     m_timezone->setText(c.timezone);
@@ -541,7 +525,6 @@ void SettingsTab::reload() {
 config::Config SettingsTab::collect() const {
     config::Config c = m_engine->config();  // read-modify-write
     c.safetyInterval = m_interval->value();
-    c.cycleEnabled = m_runCycle->isChecked();
     c.dailyShuffleEnabled = m_dailyShuffle->isChecked();
     c.startSchedulerOnLaunch = m_startOnLaunch->isChecked();
     c.timezone = m_timezone->text().trimmed();

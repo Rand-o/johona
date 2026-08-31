@@ -10,7 +10,7 @@
 //     "location":     { "city": "", "latitude": 33.4484, "longitude": -112.074,
 //                       "timezone": "America/Phoenix" },
 //     "location_auto_update": { "on_timezone_change": false },
-//     "scheduling":   { "safety_interval": 60, "cycle_enabled": true,
+//     "scheduling":   { "safety_interval": 60,
 //                       "daily_shuffle_enabled": true },
 //     "backend":      { "override": "auto" },
 //     "theme":        { "last_applied": "", "last_applied_image": "" }
@@ -59,7 +59,6 @@ struct Config {
 
     // scheduling
     int safetyInterval = 60;  // seconds
-    bool cycleEnabled = true;  // false: never run the periodic cycle task
     bool dailyShuffleEnabled = true;
 
     // backend

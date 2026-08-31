@@ -3,5 +3,8 @@
         <file alias="johona.png">icons/johona.png</file>
         <file alias="johona-light.png">icons/johona-light.png</file>
         <file alias="johona-dark.png">icons/johona-dark.png</file>
+        <file alias="spin-up.svg">icons/spin-up.svg</file>
+        <file alias="spin-down.svg">icons/spin-down.svg</file>
+        <file alias="combobox-down.svg">icons/combobox-down.svg</file>
     </qresource>
 </RCC>

@@ -579,12 +579,12 @@ void Engine::start() {
             emit statusChanged(out.message);
     });
 
-    // The periodic cycle task is optional (kWallpaper "Enable cycle task");
-    // the event-driven one-shots below run regardless.
+    // Safety tick: event-driven watchdog (clock jumps, missed one-shots,
+    // resume, drift).  Always running — the one-shot timer arms the exact
+    // next boundary, the safety tick catches everything else.
     auto* safety = ensureSafetyTimer();
     safety->setInterval(std::max(5, m_config.safetyInterval) * 1000);
-    if (m_config.cycleEnabled)
-        safety->start();
+    safety->start();
 
     // login1 PrepareForSleep (session bus) — re-evaluate on resume.
     // Non-const: QDBusConnection::connect is non-const in Qt 6.
@@ -641,12 +641,6 @@ void Engine::setConfig(const config::Config& config) {
     m_backends->setOverride(m_config.backendOverride);
     if (m_safetyTimer) {
         m_safetyTimer->setInterval(std::max(5, m_config.safetyInterval) * 1000);
-        if (m_running) {
-            if (m_config.cycleEnabled)
-                m_safetyTimer->start();
-            else
-                m_safetyTimer->stop();
-        }
     }
     if (m_running)
         reschedule();

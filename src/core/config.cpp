@@ -50,7 +50,6 @@ QVariantMap Config::toMap() const {
         {"location_auto_update", QVariantMap{{"on_timezone_change", onTimezoneChange}}},
         {"scheduling",
          QVariantMap{{"safety_interval", safetyInterval},
-                     {"cycle_enabled", cycleEnabled},
                      {"daily_shuffle_enabled", dailyShuffleEnabled}}},
         {"backend", QVariantMap{{"override", backendOverride}}},
         {"theme",
@@ -132,7 +131,6 @@ Config Config::fromMap(const QVariantMap& map) {
         c.safetyInterval = 5;  // sanity floor
     if (c.safetyInterval > 3600)
         c.safetyInterval = 3600;
-    c.cycleEnabled = boolean(scheduling, "cycle_enabled", true);
     c.dailyShuffleEnabled = boolean(scheduling, "daily_shuffle_enabled", true);
 
     const QVariantMap backend = sub(map, "backend");

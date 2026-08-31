@@ -286,14 +286,11 @@ void MainWindow::setupUi() {
         bn->setFont(f);
     }
     auto* bs = new QLabel(QStringLiteral("Wallpaper Scheduler"), brand);
+    bs->setProperty("cssClass", "muted");
     {
         QFont f;
         f.setPixelSize(11);
         bs->setFont(f);
-        QPalette pal = bs->palette();
-        pal.setColor(QPalette::WindowText,
-                     pal.color(QPalette::PlaceholderText));
-        bs->setPalette(pal);
     }
     brandText->addWidget(bn);
     brandText->addWidget(bs);
@@ -345,14 +342,11 @@ void MainWindow::setupUi() {
     cl->addLayout(row);
     m_sideSub =
         new QLabel(QStringLiteral("Press Start to apply wallpapers"), card);
+    m_sideSub->setProperty("cssClass", "muted");
     {
         QFont f;
         f.setPixelSize(11);
         m_sideSub->setFont(f);
-        QPalette pal = m_sideSub->palette();
-        pal.setColor(QPalette::WindowText,
-                     pal.color(QPalette::PlaceholderText));
-        m_sideSub->setPalette(pal);
     }
     m_sideSub->setWordWrap(true);
     m_sideSub->setContentsMargins(15, 4, 0, 9);

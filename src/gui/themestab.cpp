@@ -186,9 +186,11 @@ private:
 /// Decode a theme card thumbnail with long edge ≤ `target`.  The
 /// downscale happens inside the decoder (setScaledSize), so no
 /// full-resolution buffer is ever allocated.  Worker.
+/// autoTransform is skipped: EXIF rotation is not needed for a small
+/// card preview and it forces a full-res decode + rotate pass.
 QImage decodeCardThumb(const QString& path, int target) {
     QImageReader reader(path);
-    reader.setAutoTransform(true);
+    reader.setAutoTransform(false);
     const QSize sz = reader.size();
     if (sz.isValid()) {
         if (sz.width() >= sz.height())
@@ -224,14 +226,11 @@ ThemesTab::ThemesTab(Engine* engine, const config::Paths& paths,
         title->setFont(f);
     }
     m_countLabel = new QLabel(QStringLiteral("0 installed"), head);
+    m_countLabel->setProperty("cssClass", "muted");
     {
         QFont f;
         f.setPixelSize(12);
         m_countLabel->setFont(f);
-        QPalette pal = m_countLabel->palette();
-        pal.setColor(QPalette::WindowText,
-                     pal.color(QPalette::PlaceholderText));
-        m_countLabel->setPalette(pal);
     }
     titleBox->addWidget(title);
     titleBox->addWidget(m_countLabel);
@@ -281,14 +280,11 @@ ThemesTab::ThemesTab(Engine* engine, const config::Paths& paths,
 
     m_emptyLabel =
         new QLabel(QString(), m_list->viewport());
+    m_emptyLabel->setProperty("cssClass", "muted");
     {
         QFont f;
         f.setPixelSize(12);
         m_emptyLabel->setFont(f);
-        QPalette pal = m_emptyLabel->palette();
-        pal.setColor(QPalette::WindowText,
-                     pal.color(QPalette::PlaceholderText));
-        m_emptyLabel->setPalette(pal);
     }
     m_emptyLabel->setAlignment(Qt::AlignCenter);
     m_emptyLabel->hide();
@@ -313,14 +309,11 @@ ThemesTab::ThemesTab(Engine* engine, const config::Paths& paths,
         m_nameLabel->setFont(f);
     }
     m_metaLabel = new QLabel(QString(), panel);
+    m_metaLabel->setProperty("cssClass", "muted");
     {
         QFont f;
         f.setPixelSize(12);  // 11.5 px mockup
         m_metaLabel->setFont(f);
-        QPalette pal = m_metaLabel->palette();
-        pal.setColor(QPalette::WindowText,
-                     pal.color(QPalette::PlaceholderText));
-        m_metaLabel->setPalette(pal);
     }
     nameBox->addWidget(m_nameLabel);
     nameBox->addWidget(m_metaLabel);
@@ -489,7 +482,7 @@ void ThemesTab::requestThumbs() {
         dpr = 1.0;
     const int thumbTarget =
         qMax(250, qMin(500, static_cast<int>(m_list->viewport()->width() * dpr)));
-    QList<QPair<QString, QString>> pairs;  // (image file, theme path)
+    QPointer<ThemesTab> guard = this;
     for (int i = 0; i < m_list->count(); i++) {
         auto* item = m_list->item(i);
         const QString path = item->data(Qt::UserRole).toString();
@@ -501,37 +494,31 @@ void ThemesTab::requestThumbs() {
             continue;
         }
         m_thumbLoading.insert(path);
-        pairs.append({imgs.first(), path});
+        const QString img = imgs.first();
+        // One task per theme so all pool threads stay busy in parallel.
+        imageDecodePool()->start(
+            [guard, token, img, path, thumbTarget]() {
+                const QPixmap thumb =
+                    QPixmap::fromImage(decodeCardThumb(img, thumbTarget));
+                if (!guard)
+                    return;
+                QMetaObject::invokeMethod(
+                    guard.data(),
+                    [guard, token, path, thumb = std::move(thumb)]() mutable {
+                        if (guard)
+                            guard->onThumbsReady(token, path, std::move(thumb));
+                    },
+                    Qt::QueuedConnection);
+            });
     }
-    if (pairs.isEmpty())
-        return;
-    QPointer<ThemesTab> guard = this;
-    imageDecodePool()->start(
-        [guard, token, pairs, thumbTarget]() {
-            QHash<QString, QPixmap> thumbs;
-            for (const auto& [img, themePath] : pairs)
-                thumbs.insert(themePath,
-                              QPixmap::fromImage(decodeCardThumb(img,
-                                                                thumbTarget)));
-            if (!guard)
-                return;
-            QMetaObject::invokeMethod(
-                guard.data(),
-                [guard, token, thumbs = std::move(thumbs)]() mutable {
-                    if (guard)
-                        guard->onThumbsReady(token, std::move(thumbs));
-                },
-                Qt::QueuedConnection);
-        });
 }
 
-void ThemesTab::onThumbsReady(int token, QHash<QString, QPixmap> thumbs) {
+void ThemesTab::onThumbsReady(int token, const QString& path,
+                              QPixmap thumb) {
     if (token != m_thumbToken)
         return;  // superseded (list refreshed)
-    for (auto it = thumbs.constBegin(); it != thumbs.constEnd(); ++it) {
-        m_thumbLoading.remove(it.key());
-        m_thumbs.insert(it.key(), it.value());
-    }
+    m_thumbLoading.remove(path);
+    m_thumbs.insert(path, std::move(thumb));
     m_list->viewport()->update();
 }
 

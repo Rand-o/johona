@@ -513,14 +513,12 @@ SchedulePreview::SchedulePreview(QWidget* parent)
     foot->setSpacing(10);
     m_footNow = new QLabel(QString(), this);
     m_footLoc = new QLabel(QString(), this);
+    m_footNow->setProperty("cssClass", "muted");
+    m_footLoc->setProperty("cssClass", "muted");
     QFont ff;
     ff.setPixelSize(11);
     m_footNow->setFont(ff);
     m_footLoc->setFont(ff);
-    QPalette fpal = m_footNow->palette();
-    fpal.setColor(QPalette::WindowText, fpal.color(QPalette::PlaceholderText));
-    m_footNow->setPalette(fpal);
-    m_footLoc->setPalette(fpal);
     m_footLoc->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
     foot->addWidget(m_footNow, 1);
     foot->addWidget(m_footLoc);

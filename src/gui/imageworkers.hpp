@@ -15,7 +15,7 @@ namespace johona::gui {
 
 inline QThreadPool* imageDecodePool() {
     static QThreadPool pool;
-    pool.setMaxThreadCount(3);  // bounds parallel 5K-8K JPEG decode buffers
+    pool.setMaxThreadCount(4);  // bounds parallel 5K-8K JPEG decode buffers
     return &pool;
 }
 

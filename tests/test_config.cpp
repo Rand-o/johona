@@ -39,7 +39,6 @@ static bool sameConfig(const Config& a, const Config& b) {
            a.longitude == b.longitude && a.timezone == b.timezone &&
            a.onTimezoneChange == b.onTimezoneChange &&
            a.safetyInterval == b.safetyInterval &&
-           a.cycleEnabled == b.cycleEnabled &&
            a.dailyShuffleEnabled == b.dailyShuffleEnabled &&
            a.backendOverride == b.backendOverride &&
            a.lastApplied == b.lastApplied && a.lastAppliedImage == b.lastAppliedImage;
@@ -57,7 +56,6 @@ void TestConfig::defaults() {
     QCOMPARE(c.timezone, QString("America/Phoenix"));
     QVERIFY(!c.onTimezoneChange);
     QCOMPARE(c.safetyInterval, 60);
-    QVERIFY(c.cycleEnabled);
     QVERIFY(c.dailyShuffleEnabled);
     QCOMPARE(c.backendOverride, QString("auto"));
     QCOMPARE(c.lastApplied, QString(""));
@@ -75,7 +73,6 @@ void TestConfig::toMapFromMap_roundtrip() {
     c.timezone = "America/Phoenix";
     c.onTimezoneChange = true;
     c.safetyInterval = 120;
-    c.cycleEnabled = false;
     c.dailyShuffleEnabled = false;
     c.backendOverride = "plasma";
     c.lastApplied = "sunset_pack";

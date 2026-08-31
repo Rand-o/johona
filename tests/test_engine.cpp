@@ -392,18 +392,16 @@ void TestEngine::cycleDisabled_skipsSafetyTick() {
     mock.setFailuresRemaining = 1000;  // always fails
     auto engine = makeEngine(&mock, fixedNow);
 
-    // 1 s safety interval, cycle task disabled.
+    // Large safety interval so the tick doesn't fire during the test.
     config::Config cfg = engine->config();
-    cfg.safetyInterval = 1;
-    cfg.cycleEnabled = false;
+    cfg.safetyInterval = 3600;
     engine->setConfig(cfg);
 
     engine->start();
     // Initial apply fails (mock always fails): attempt + one retry.
     QCOMPARE(mock.setCalls(), 2);
 
-    // Wait past the safety interval: with the cycle task enabled the
-    // pending failure would be retried here; disabled → no retry.
+    // Wait: the safety tick is far away (3600 s) → no retry.
     QTest::qWait(1500);
     QCOMPARE(mock.setCalls(), 2);
 

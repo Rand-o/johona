@@ -180,16 +180,18 @@ inline QString buildStyleSheet(const Tokens& t) {
         "QSpinBox[cssClass~=\"field\"]:focus, QDoubleSpinBox[cssClass~=\"field\"]:focus {\n"
         "  border: 1px solid %4; outline: 1px solid %4; }\n"
         "QComboBox[cssClass~=\"field\"]::drop-down {\n"
-        "  width: 22px; border: none; }\n"
+        "  width: 22px; border: none; border-left: 1px solid %1; }\n"
+        "QComboBox[cssClass~=\"field\"]::down-arrow {\n"
+        "  image: url(:/icons/combobox-down.svg); width: 10px; height: 6px; }\n"
         "QSpinBox[cssClass~=\"field\"]::up-button, QDoubleSpinBox[cssClass~=\"field\"]::up-button,\n"
         "QSpinBox[cssClass~=\"field\"]::down-button, QDoubleSpinBox[cssClass~=\"field\"]::down-button {\n"
-        "  width: 18px; border: none; border-left: 1px solid %1;\n"
-        "  background: %5; }\n"
-        "QSpinBox[cssClass~=\"field\"]::up-button:hover, QDoubleSpinBox[cssClass~=\"field\"]::up-button:hover,\n"
-        "QSpinBox[cssClass~=\"field\"]::down-button:hover, QDoubleSpinBox[cssClass~=\"field\"]::down-button:hover {\n"
-        "  background: %6; }\n")
+        "  width: 18px; border-left: 1px solid %1; background: %2; }\n"
+        "QSpinBox[cssClass~=\"field\"]::up-arrow, QDoubleSpinBox[cssClass~=\"field\"]::up-arrow {\n"
+        "  image: url(:/icons/spin-up.svg); width: 10px; height: 6px; }\n"
+        "QSpinBox[cssClass~=\"field\"]::down-arrow, QDoubleSpinBox[cssClass~=\"field\"]::down-arrow {\n"
+        "  image: url(:/icons/spin-down.svg); width: 10px; height: 6px; }\n")
         .arg(v("--btn-border"), v("--base"), v("--window-text"),
-             v("--highlight"), v("--button"), v("--btn-hover"));
+             v("--highlight"));
 
     // ── QMenu (hamburger) ───────────────────────────────────────────────
     s += QStringLiteral(
@@ -233,6 +235,19 @@ inline QString buildStyleSheet(const Tokens& t) {
         "QWidget[cssClass~=\"sb-sep\"] { background: %2; max-width: 1px;\n"
         "  min-width: 1px; }\n")
         .arg(v("--window"), v("--midlight"), v("--placeholder"));
+
+    // ── labels ──────────────────────────────────────────────────────────
+    // Many labels set a widget-specific palette (WindowText =
+    // PlaceholderText) at construction for muted text.  When the app
+    // palette changes (theme switch), those widget palettes are not
+    // updated, leaving stale colors.  A global stylesheet rule overrides
+    // the palette for ALL QLabels with the token's windowText; the muted
+    // rule (more specific) then re-applies the placeholder color.  Both
+    // are regenerated on every applyAppearance() call.
+    s += QStringLiteral(
+        "QLabel { color: %1; }\n"
+        "QLabel[cssClass~=\"muted\"] { color: %2; }\n")
+        .arg(v("--window-text"), v("--placeholder"));
 
     // ── title bar & sidebar ─────────────────────────────────────────────
     s += QStringLiteral(

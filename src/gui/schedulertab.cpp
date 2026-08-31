@@ -163,14 +163,11 @@ SchedulerTab::SchedulerTab(Engine* engine, QWidget* parent)
         QStringLiteral("Event-driven — one-shot boundary timer + safety "
                        "tick"),
         head);
+    subtitle->setProperty("cssClass", "muted");
     {
         QFont f;
         f.setPixelSize(12);
         subtitle->setFont(f);
-        QPalette pal = subtitle->palette();
-        pal.setColor(QPalette::WindowText,
-                     pal.color(QPalette::PlaceholderText));
-        subtitle->setPalette(pal);
     }
     titleBox->addWidget(title);
     titleBox->addWidget(subtitle);
@@ -206,15 +203,12 @@ SchedulerTab::SchedulerTab(Engine* engine, QWidget* parent)
     auto* stateBox = new QVBoxLayout();
     stateBox->setSpacing(0);
     auto* heroLabel = new QLabel(QStringLiteral("STATUS"), m_hero);
+    heroLabel->setProperty("cssClass", "muted");
     {
         QFont f;
         f.setPixelSize(11);  // 10.5 px mockup
         f.setWeight(QFont::Bold);
         heroLabel->setFont(f);
-        QPalette pal = heroLabel->palette();
-        pal.setColor(QPalette::WindowText,
-                     pal.color(QPalette::PlaceholderText));
-        heroLabel->setPalette(pal);
     }
     stateBox->addWidget(heroLabel);
 
@@ -234,14 +228,11 @@ SchedulerTab::SchedulerTab(Engine* engine, QWidget* parent)
     stateBox->addLayout(stateRow);
 
     m_subLabel = new QLabel(QString(), m_hero);
+    m_subLabel->setProperty("cssClass", "muted");
     {
         QFont f;
         f.setPixelSize(12);  // 11.5 px mockup
         m_subLabel->setFont(f);
-        QPalette pal = m_subLabel->palette();
-        pal.setColor(QPalette::WindowText,
-                     pal.color(QPalette::PlaceholderText));
-        m_subLabel->setPalette(pal);
     }
     stateBox->addWidget(m_subLabel);
     heroLay->addLayout(stateBox);
@@ -252,15 +243,12 @@ SchedulerTab::SchedulerTab(Engine* engine, QWidget* parent)
         auto* box = new QVBoxLayout();
         box->setSpacing(0);
         auto* l = new QLabel(label.toUpper(), m_hero);
+        l->setProperty("cssClass", "muted");
         {
             QFont f;
             f.setPixelSize(11);
             f.setWeight(QFont::Bold);
             l->setFont(f);
-            QPalette pal = l->palette();
-            pal.setColor(QPalette::WindowText,
-                         pal.color(QPalette::PlaceholderText));
-            l->setPalette(pal);
         }
         value = new QLabel(QStringLiteral("—"), m_hero);
         {
@@ -270,14 +258,11 @@ SchedulerTab::SchedulerTab(Engine* engine, QWidget* parent)
             value->setFont(f);
         }
         sub = new QLabel(QString(), m_hero);
+        sub->setProperty("cssClass", "muted");
         {
             QFont f;
             f.setPixelSize(11);
             sub->setFont(f);
-            QPalette pal = sub->palette();
-            pal.setColor(QPalette::WindowText,
-                         pal.color(QPalette::PlaceholderText));
-            sub->setPalette(pal);
         }
         box->addWidget(l);
         box->addWidget(value);
