@@ -96,6 +96,7 @@ private slots:
     void backendFailure_defersToSafetyTick();
     void safetyTick_noop();
     void safetyTick_reappliesWhenDesktopChanged();
+    void safetyTick_clockJumpAdvancesShuffle();
     void cycleDisabled_skipsSafetyTick();
     void gnomeProbe_rejectedWithoutShell();
     void nextChange_valid();
@@ -122,7 +123,8 @@ private:
     }
 
     std::unique_ptr<Engine> makeEngine(MockRun* mock, QDateTime fixedNow,
-                                       bool shuffleEnabled = true) {
+                                       bool shuffleEnabled = true,
+                                       std::shared_ptr<Clock> clock = nullptr) {
         Engine::Deps deps;
         config::Config cfg;
         cfg.timezone = "America/Phoenix";
@@ -138,8 +140,10 @@ private:
             });
         deps.scheduler = std::make_unique<Scheduler>();
         deps.bus = mockBus();
-        deps.clock =
-            std::make_shared<FixedClock>(fixedNow.toTimeZone(QTimeZone("America/Phoenix")));
+        if (!clock)
+            clock = std::make_shared<FixedClock>(
+                fixedNow.toTimeZone(QTimeZone("America/Phoenix")));
+        deps.clock = clock;
         deps.retryDelayMs = 20;
         return std::make_unique<Engine>(std::move(deps));
     }
@@ -380,6 +384,57 @@ void TestEngine::safetyTick_reappliesWhenDesktopChanged() {
     // Desktop matches again → the tick goes back to no-op.
     mock.currentPictureUri = QUrl::fromLocalFile(first.imagePath).toString();
     engine->runSafetyTick();
+    QCOMPARE(mock.setCalls(), setsAfterFirst + 2);
+}
+
+void TestEngine::safetyTick_clockJumpAdvancesShuffle() {
+    resetState();
+    makeTheme("other");
+    makeTheme("solar");
+    const QTimeZone tz("America/Phoenix");
+    const QDateTime dayX(QDate(2013, 3, 5), QTime(23, 30), tz);
+    auto clock = std::make_shared<FixedClock>(dayX);
+    MockRun mock;
+    auto engine = makeEngine(&mock, dayX, /*shuffleEnabled=*/true, clock);
+
+    // Initial apply on day X: picks the front theme (other) and seeds the
+    // shuffle state with lastUsedDate = day X, index 0.
+    const ApplyOutcome first = engine->applyNow();
+    QVERIFY2(first.success, qPrintable(first.message));
+    QCOMPARE(first.themeName, QString("other"));
+    const int setsAfterFirst = mock.setCalls();
+    const shuffle::ShuffleState seeded = shuffle::loadShuffleState(m_shufflePath);
+    QCOMPARE(seeded.currentIndex, 0);
+    QCOMPARE(seeded.lastUsedDate, QString("2013-03-05"));
+
+    // Prime the engine's last-seen wall/mono/date (as start() would).
+    engine->runSafetyTick();
+    QCOMPARE(mock.setCalls(), setsAfterFirst);  // same day → no-op
+
+    // Simulate waking on the next day: the wall clock jumps forward but the
+    // monotonic clock does not (sleep) → a clock jump spanning midnight.
+    clock->set(QDateTime(QDate(2013, 3, 6), QTime(9, 0), tz));
+
+    QSignalSpy logSpy(engine.get(), &Engine::logMessage);
+    engine->runSafetyTick();
+
+    // The clock-jump path must advance the daily shuffle immediately, not
+    // re-apply yesterday's theme and wait for the next tick's new-day check.
+    const shuffle::ShuffleState advanced = shuffle::loadShuffleState(m_shufflePath);
+    QCOMPARE(advanced.currentIndex, 1);
+    QCOMPARE(advanced.lastUsedDate, QString("2013-03-06"));
+    QCOMPARE(config::load(m_configPath).lastApplied, QString("solar"));
+    QCOMPARE(mock.setCalls(), setsAfterFirst + 2);  // re-set (uri + uri-dark)
+    bool sawJump = false;
+    for (const auto& args : logSpy)
+        if (args.at(0).toString().startsWith(QStringLiteral("Clock jump detected")))
+            sawJump = true;
+    QVERIFY(sawJump);
+
+    // The following tick (no further jump) must not advance again or
+    // re-apply — the new-day transition is already handled.
+    engine->runSafetyTick();
+    QCOMPARE(shuffle::loadShuffleState(m_shufflePath).currentIndex, 1);
     QCOMPARE(mock.setCalls(), setsAfterFirst + 2);
 }
 

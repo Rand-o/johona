@@ -440,7 +440,14 @@ void Engine::onSafetyTick() {
     if (clockJump) {
         emit statusChanged(QStringLiteral("Clock jump detected; recomputing schedule"));
         emit logMessage(QStringLiteral("Clock jump detected; recomputing schedule"));
-        const auto out = applyCurrent(false);
+        // A clock jump can span midnight (e.g. resume from sleep on a new
+        // day). If the local date has moved on, advance the daily shuffle so
+        // this first apply after the jump uses today's theme — without this
+        // we would re-apply yesterday's theme and only advance a minute
+        // later on the next safety tick's new-day check.
+        const bool newDay = m_lastDate.isValid() && now.date() != m_lastDate;
+        m_lastDate = now.date();
+        const auto out = applyCurrent(newDay && m_config.dailyShuffleEnabled);
         if (out.success)
             reschedule();
         return;
