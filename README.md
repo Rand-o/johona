@@ -47,6 +47,16 @@ The rewrite fixes the three structural problems of the original:
   data (themes + config) into its own sandbox; the old data is left
   untouched.
 
+## Screenshots
+
+Themes tab — installed theme cards, live preview, and the 24-hour schedule:
+
+![Themes tab](images/johona-themes.png)
+
+Settings tab — scheduler, location, wallpaper backend, and appearance:
+
+![Settings tab](images/johona-settings.png)
+
 ## How the timing works
 
 All solar math is a faithful C++ port of
