@@ -1,3 +1,9 @@
+> 📦 **kWallpaper is retired.** The original
+> [kWallpaper](https://github.com/Rand-o/kwallpaper) project has been
+> **archived**; **Johona is its successor**. If you were using kWallpaper,
+> switch to Johona — it migrates your themes and config automatically on
+> first run.
+
 # Johona Wallpaper
 
 > ⚠️ **Disclaimer** — This project was completely vibecoded using
